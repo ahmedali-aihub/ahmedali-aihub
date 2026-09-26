@@ -498,6 +498,83 @@ def shine_gradient(P, width: int, travel: tuple[int, int], dur: float) -> str:
 # Hero
 # --------------------------------------------------------------------------
 
+def network(P) -> str:
+    """The AI/ML engineering loop drawn as a dense network: one layer per stage
+    (config "network"), pulses flowing left to right, and one layer lit at a time
+    while the caption below names the real work behind it."""
+    layers = CFG["network"]
+    n_layers = len(layers)
+    x_first, x_last = 736, 1136
+    xs = [x_first + i * (x_last - x_first) / (n_layers - 1) for i in range(n_layers)]
+    cy, gy = 206, 48
+    pos = [[(xs[i], cy + (k - (l["nodes"] - 1) / 2) * gy) for k in range(l["nodes"])]
+           for i, l in enumerate(layers)]
+    T = 3.2 * n_layers  # one stage every 3.2 s
+
+    def window(i: int) -> str:
+        """Discrete opacity: visible only during stage i."""
+        a, b = i / n_layers, (i + 1) / n_layers
+        vals = 'values="1;0" keyTimes="0;{:.4f}"'.format(b) if i == 0 else \
+            'values="0;1;0" keyTimes="0;{:.4f};{:.4f}"'.format(a, b)
+        return (f'<animate attributeName="opacity" calcMode="discrete" {vals} dur="{T:.1f}s" '
+                f'repeatCount="indefinite"/>')
+
+    out = []
+    # Dense connections between adjacent layers.
+    for a, b in zip(pos, pos[1:]):
+        for x1, y1 in a:
+            for x2, y2 in b:
+                out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                           f'stroke="{P.ink4}" stroke-opacity="0.3" stroke-width="1"/>')
+
+    # The active layer: a capsule behind it and its header in full ink.
+    for i, (l, col) in enumerate(zip(layers, pos)):
+        x, top, bot = xs[i], col[0][1], col[-1][1]
+        out.append(f'<rect x="{x - 25:.1f}" y="{top - 25:.1f}" width="50" height="{bot - top + 50:.1f}" rx="25" '
+                   f'fill="{P.ink}" fill-opacity="{0.06 if P.mode == "dark" else 0.07}" stroke="{P.hair2}" '
+                   f'opacity="{1 if i == 0 else 0}">{window(i)}</rect>')
+        out.append(f'<text x="{x:.1f}" y="96" text-anchor="middle" class="mono" font-size="13" letter-spacing="2" '
+                   f'fill="{P.ink4}">{esc(l["layer"])}</text>'
+                   f'<text x="{x:.1f}" y="96" text-anchor="middle" class="mono" font-size="13" letter-spacing="2" '
+                   f'font-weight="600" fill="{P.ink}" opacity="{1 if i == 0 else 0}">{esc(l["layer"])}{window(i)}</text>')
+
+    # Activations: pulses along routes that visit every layer.
+    routes = [[0, 1, 2, 1, 0], [1, 3, 0, 2, 0], [2, 0, 3, 0, 0], [1, 2, 1, 1, 0], [0, 3, 2, 2, 0]]
+    for j, route in enumerate(routes):
+        pts = [pos[i][min(k, len(pos[i]) - 1)] for i, k in enumerate(route[:n_layers])]
+        d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+        out.append(f'<path id="act{j}" d="{d}" fill="none"/>'
+                   f'<g opacity="0"><circle r="8" fill="url(#pulseGlow)"/><circle r="2.6" fill="{P.ink}"/>'
+                   f'<animateMotion dur="3.4s" begin="{j * 0.68:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
+                   f'keyTimes="0;0.8;1" calcMode="linear"><mpath xlink:href="#act{j}"/></animateMotion>'
+                   f'<animate attributeName="opacity" dur="3.4s" begin="{j * 0.68:.2f}s" repeatCount="indefinite" '
+                   f'values="0;1;1;0;0" keyTimes="0;0.05;0.76;0.8;1"/></g>')
+
+    # Neurons: engraved rings; the active layer's cores light up.
+    for i, col in enumerate(pos):
+        last = i == n_layers - 1
+        for x, y in col:
+            r = 12 if last else 8
+            if last:
+                out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="none" stroke="{P.ink}" stroke-width="1.3">'
+                           f'<animate attributeName="r" values="{r};{r + 13}" dur="2.2s" repeatCount="indefinite"/>'
+                           f'<animate attributeName="opacity" values="0.7;0" dur="2.2s" repeatCount="indefinite"/></circle>')
+            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.4"/>'
+                       f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * 0.45:.1f}" fill="{P.ink3}"/>'
+                       f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * 0.5:.1f}" fill="{P.ink}" '
+                       f'opacity="{1 if i == 0 else 0}">{window(i)}</circle>')
+
+    # Caption: the real work behind the lit layer.
+    cx = (x_first + x_last) / 2
+    for i, l in enumerate(layers):
+        out.append(f'<text x="{cx:.1f}" y="352" text-anchor="middle" class="mono" font-size="13.5" fill="{P.ink2}" '
+                   f'opacity="{1 if i == 0 else 0}"><tspan font-weight="600" fill="{P.ink}">{esc(l["layer"])}</tspan>'
+                   f'<tspan fill="{P.ink4}">  ·  </tspan>{esc(l["caption"])}{window(i)}</text>')
+    out.append(f'<text x="{cx:.1f}" y="377" text-anchor="middle" class="mono" font-size="11.5" letter-spacing="1.2" '
+               f'fill="{P.ink4}">MY AI/ML ENGINEERING LOOP · EVERY LAYER IS SHIPPED WORK</text>')
+    return "".join(out)
+
+
 def hero(P, M) -> str:
     W, H = 1200, 400
     name, eyebrow, status = CFG["name"], CFG["eyebrow"], CFG["status"]
@@ -505,40 +582,6 @@ def hero(P, M) -> str:
     push_line = (f"last push  →  {display_name(lp['name'])}  ·  {fdate(parse_ts(lp['pushed_at']).date())}"
                  if lp else "")
     pill_w = 46 + len(status) * 9 + 22
-
-    # The confidence-gated LangGraph from the Agentic RAG repo, engraved.
-    nodes = {  # label: (cx, cy, w)
-        "RETRIEVE": (812, 200, 118), "JUDGE": (962, 200, 100), "ANSWER": (1103, 122, 110),
-        "ESCALATE": (1099, 278, 118), "REWRITE": (887, 306, 112),
-    }
-    edges = ["M712,200 H751", "M871,200 H910",
-             "M1012,200 C1030,200 1030,122 1046,122", "M1012,200 C1030,200 1030,278 1038,278",
-             "M962,218 C962,264 956,306 945,306", "M831,306 C814,306 812,264 812,220"]
-    edge_svg = "".join(f'<path d="{d}" fill="none" stroke="{P.ink4}" stroke-width="1.3" marker-end="url(#arrow)"/>'
-                       for d in edges)
-    labels = (f'<text x="1018" y="148" text-anchor="end" class="mono" font-size="13" fill="{P.ink4}">≥ 0.6</text>'
-              f'<text x="972" y="272" class="mono" font-size="13" fill="{P.ink4}">&lt; 0.6</text>'
-              f'<text x="1099" y="319" text-anchor="middle" class="mono" font-size="13" fill="{P.ink4}">after 1 retry</text>'
-              f'<text x="708" y="185" class="mono" font-size="13" fill="{P.ink4}">query</text>')
-    node_svg = ""
-    for i, (label, (cx, cy, w)) in enumerate(nodes.items()):
-        node_svg += (f'<g class="fade" style="animation-delay:{0.3 + i * 0.12:.2f}s">'
-                     f'<rect x="{cx - w / 2}" y="{cy - 18}" width="{w}" height="36" rx="18" fill="{P.node}" '
-                     f'stroke="url(#chromeEdge)" stroke-width="1.3"/>'
-                     f'<text x="{cx}" y="{cy + 5}" text-anchor="middle" class="mono" font-size="14" '
-                     f'letter-spacing="1.4" fill="{P.ink2}">{label}</text></g>')
-
-    # Signal pulses: most requests are answered; some retry once, then escalate.
-    path_answer = "M706,200 L1012,200 C1030,200 1030,122 1046,122 L1103,122"
-    path_retry = ("M706,200 L962,200 L962,218 C962,264 956,306 945,306 L831,306 C814,306 812,264 812,220 "
-                  "L812,200 L1012,200 C1030,200 1030,278 1038,278 L1099,278")
-
-    def pulse(pid: str, dur: float, begin: float, travel: float) -> str:
-        return (f'<g opacity="0"><circle r="8" fill="url(#pulseGlow)"/><circle r="2.8" fill="{P.ink}"/>'
-                f'<animateMotion dur="{dur}s" begin="{begin}s" repeatCount="indefinite" keyPoints="0;1;1" '
-                f'keyTimes="0;{travel};1" calcMode="linear"><mpath xlink:href="#{pid}"/></animateMotion>'
-                f'<animate attributeName="opacity" dur="{dur}s" begin="{begin}s" repeatCount="indefinite" '
-                f'values="0;1;1;0;0" keyTimes="0;0.04;{travel - 0.03:.2f};{travel:.2f};1"/></g>')
 
     body = f"""
 <g class="rise" style="animation-delay:.05s"><text x="64" y="90" font-size="15" font-weight="600" letter-spacing="3.4" fill="{P.ink3}">{esc(eyebrow)}</text></g>
@@ -557,24 +600,17 @@ def hero(P, M) -> str:
 <text x="106" y="326" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
 <text x="66" y="377" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
 </g>
-<g>{edge_svg}{labels}
-<path id="pa" d="{path_answer}" fill="none"/><path id="pr" d="{path_retry}" fill="none"/>
-{pulse("pa", 4.2, 0.8, 0.62)}{pulse("pa", 4.2, 2.9, 0.62)}{pulse("pr", 9.0, 1.9, 0.78)}
-<circle cx="706" cy="200" r="3.2" fill="{P.ink3}"/>
-{node_svg}
-<text x="1152" y="377" text-anchor="end" class="mono" font-size="12.5" letter-spacing="1" fill="{P.ink4}">CONFIDENCE-GATED LANGGRAPH · FROM MY AGENTIC RAG REPO</text>
-</g>"""
+<g class="fade" style="animation-delay:.35s">{network(P)}</g>"""
 
+    stages = "; ".join(f"{l['layer'].title()}: {l['caption']}" for l in CFG["network"])
     defs = (chrome_gradient(P) + chrome_gradient(P, "chromeEdge", "0", "0", "1", "1")
             + shine_gradient(P, 260, (-300, 760), 7)
             + f'<radialGradient id="pulseGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.55"/>'
-              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
-            + f'<marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
-              f'<path d="M1,1 L7,4 L1,7" fill="none" stroke="{P.ink4}" stroke-width="1.2"/></marker>')
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
-                desc=f"{CFG['city']}. Status: {status}. {push_line}. Diagram: the retrieve → judge → "
-                     "answer / rewrite / escalate graph from the Agentic RAG Support Assistant.")
+                desc=f"{CFG['city']}. Status: {status}. {push_line}. Animated network of my AI/ML "
+                     f"engineering loop, one layer per stage — {stages}.")
 
 
 # --------------------------------------------------------------------------

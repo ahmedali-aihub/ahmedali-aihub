@@ -7,6 +7,14 @@
   "city": "Hyderabad, India",
   "status": "Building RAG pipelines & LLM agents",
 
+  "network": [
+    { "layer": "DATA",    "nodes": 3, "caption": "20M events → sessions · docs → 313 chunks" },
+    { "layer": "MODELS",  "nodes": 4, "caption": "GRU4Rec · cross-encoder rerank · LLMs" },
+    { "layer": "AGENTS",  "nodes": 4, "caption": "LangGraph judge that knows when to abstain" },
+    { "layer": "SERVING", "nodes": 3, "caption": "FastAPI · SSE streaming · Docker · CI" },
+    { "layer": "IMPACT",  "nodes": 1, "caption": "5.3× Recall@10 · 0/5 hallucinated" }
+  ],
+
   "exclude_repos": ["ahmedali-aihub"],
   "display_names": {
     "Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation": "Agentic RAG Support Assistant",

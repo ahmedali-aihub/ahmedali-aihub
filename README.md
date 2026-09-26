@@ -348,12 +348,12 @@ flowchart LR
 <!--START_SECTION:metrics-table-->
 | Metric | Value |
 |---|---:|
-| Contributions since joining | 52 |
-| Commits | 45 |
+| Contributions since joining | 53 |
+| Commits | 46 |
 | Pull requests | 0 |
 | Issues | 0 |
 | Public repositories | 5 |
-| Stars earned | 0 |
+| Stars from others | 0 |
 | Live demos (homepage responds) | 2 |
 | Current streak | 5 days |
 | Longest streak | 5 days |
@@ -371,7 +371,7 @@ flowchart LR
 
 | Month | Oct | Nov | Dec | Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 38 |
+| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 39 |
 <!--END_SECTION:metrics-table-->
 
 </details>

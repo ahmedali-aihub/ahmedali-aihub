@@ -90,7 +90,7 @@ It eliminated hallucinated answers on out-of-scope questions **without answering
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
-flowchart LR
+flowchart TB
   Q([Question]) --> R["Retrieve<br/>top 20 → rerank → top 5"]
   R --> J{"Judge<br/>evidence 0–1"}
   J -- "≥ 0.6" --> A["Answer<br/>+ citation"]
@@ -158,18 +158,13 @@ That's **5.3× the popularity baseline**, proof the model learned session-specif
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
-flowchart LR
-  subgraph Storage
-    CSV[("REES46 CSV<br/>20M events")] -- "LOAD DATA INFILE" --> DB[("MySQL 8<br/>events")]
-  end
-  subgraph Offline["Offline pipeline"]
-    PQ["Parquet export"] --> SE["Session builder"] --> VO["Vocab + encoding"] --> SP["Time-based split"] --> TR["GRU4Rec · Keras<br/>sampled softmax"]
-  end
-  subgraph Online["Online serving"]
-    UI["React storefront<br/>session in localStorage"] -- "POST /predict" --> API["FastAPI<br/>model in memory"]
-  end
-  DB --> PQ
-  TR -- "weights + vocab" --> API
+flowchart TB
+  CSV[("REES46 CSV<br/>20M events")] -- "LOAD DATA INFILE" --> DB[("MySQL 8<br/>events table")]
+  DB --> PIPE["Offline pipeline<br/>Parquet → sessions → vocab → time split"]
+  PIPE --> TR["GRU4Rec · Keras<br/>sampled softmax"]
+  TR -- "weights + vocab" --> API["FastAPI /predict<br/>model in memory"]
+  UI["React storefront<br/>session in localStorage"] -- "last clicks" --> API
+  API -- "top 10" --> UI
 ```
 
 **Stack:** `TensorFlow / Keras` `custom GradientTape loop` `pandas` `PyArrow` `MySQL 8` `FastAPI` `React` `Tailwind + shadcn/ui` `Framer Motion` `Vercel` `Render` `Aiven`
@@ -207,10 +202,11 @@ Visitors ask about my skills and projects; the answer is retrieved from a hand-w
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
-flowchart LR
-  V([Visitor question]) --> I{"Contact intent?"}
+flowchart TB
+  V([Visitor question]) --> I{"Contact<br/>intent?"}
   I -- yes --> D["Deterministic answer<br/>no LLM involved"]
-  I -- no --> T["TF-IDF retrieve<br/>1–2-grams · top 5"] --> P["Grounded prompt"] --> C{"OpenRouter free models<br/>tried in order"}
+  I -- no --> T["TF-IDF top 5<br/>→ grounded prompt"]
+  T --> C{"OpenRouter<br/>free models<br/>in order"}
   C -- "first to stream tokens" --> S["SSE → chat widget"]
   C -. "down / throttled" .-> C
 ```
@@ -236,7 +232,7 @@ Members, memberships, payments, PDF receipts, SMS and WhatsApp, QR check-in, exp
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
-flowchart LR
+flowchart TB
   SH["packages/shared<br/>Zod schemas"] -.- W
   SH -.- API
   W["React front desk<br/>TanStack Query"] --> API["Express API<br/>JWT · 4 roles"]

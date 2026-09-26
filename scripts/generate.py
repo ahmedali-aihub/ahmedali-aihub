@@ -1284,7 +1284,6 @@ def main() -> None:
             f"streak-{m}.svg": streak(P, M, stamp),
             f"languages-{m}.svg": languages(P, M, stamp),
             f"evals-{m}.svg": evals(P),
-            f"dashboard-{m}.svg": dashboard(P, M, stamp),
             f"footer-{m}.svg": footer(P),
             f"divider-{m}.svg": divider(P),
         }

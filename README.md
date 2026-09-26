@@ -323,12 +323,6 @@ flowchart TB
   </picture>
 </p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/dashboard-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/dashboard-light.svg">
-  <img alt="Engineering dashboard: 12-month KPIs, contribution calendar, weekday rhythm, monthly contributions and recently shipped repositories." src="assets/dashboard-dark.svg" width="100%">
-</picture>
-
 <details>
 <summary><b>View the numbers behind these charts</b></summary>
 

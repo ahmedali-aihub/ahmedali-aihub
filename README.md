@@ -10,15 +10,9 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.svg">
-    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents." src="assets/hero-dark.svg" width="100%">
+    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Animated wireframe brain whose roots connect to Agentic AI, RAG pipelines, Generative AI, LLMs, Machine Learning and Deep Learning." src="assets/hero-dark.svg" width="100%">
   </picture>
 </a>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/core-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/core-light.svg">
-  <img alt="AI core: a glowing brain between an AI badge and a holographic base, with circuit traces carrying signals to Agentic AI (LangGraph agents), RAG Pipelines (Chroma, rerank), Generative AI (SSE streaming), LLMs (multi-provider), Machine Learning (scikit-learn) and Deep Learning (TensorFlow, GRU)." src="assets/core-dark.svg" width="100%">
-</picture>
 
 <a href="https://portfolio-kappa-gold-87laqyj57s.vercel.app">
   <picture>

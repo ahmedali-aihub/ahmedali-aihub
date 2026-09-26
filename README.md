@@ -330,12 +330,6 @@ flowchart TB
 </p>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/trophies-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/trophies-light.svg">
-  <img alt="Milestones: tiered plates for commits, longest streak, repositories, languages, live demos and contributions, each with progress to the next tier." src="assets/trophies-dark.svg" width="100%">
-</picture>
-
-<picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dashboard-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/dashboard-light.svg">
   <img alt="Engineering dashboard: 12-month KPIs, contribution calendar, weekday rhythm, monthly contributions and recently shipped repositories." src="assets/dashboard-dark.svg" width="100%">

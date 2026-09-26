@@ -498,84 +498,99 @@ def shine_gradient(P, width: int, travel: tuple[int, int], dur: float) -> str:
 # Hero
 # --------------------------------------------------------------------------
 
-def network(P) -> str:
-    """The AI/ML engineering loop drawn as a dense network: one layer per stage
-    (config "network"), pulses flowing left to right, and one layer lit at a time
-    while the caption below names the real work behind it."""
-    layers = CFG["network"]
-    n_layers = len(layers)
-    x_first, x_last = 736, 1136
-    xs = [x_first + i * (x_last - x_first) / (n_layers - 1) for i in range(n_layers)]
-    cy, gy = 206, 48
-    pos = [[(xs[i], cy + (k - (l["nodes"] - 1) / 2) * gy) for k in range(l["nodes"])]
-           for i, l in enumerate(layers)]
-    T = 3.2 * n_layers  # one stage every 3.2 s
-
-    def window(i: int) -> str:
-        """Discrete opacity: visible only during stage i."""
-        a, b = i / n_layers, (i + 1) / n_layers
-        vals = 'values="1;0" keyTimes="0;{:.4f}"'.format(b) if i == 0 else \
-            'values="0;1;0" keyTimes="0;{:.4f};{:.4f}"'.format(a, b)
-        return (f'<animate attributeName="opacity" calcMode="discrete" {vals} dur="{T:.1f}s" '
-                f'repeatCount="indefinite"/>')
-
+def trace(P, static_run: int | None = None) -> str:
+    """An agent-trace viewer replaying the real pipelines from the repos (config
+    "trace"): spans grow as a waterfall, declined or failed spans are dimmed, and
+    each run ends in its documented outcome. static_run renders one run with no
+    animation (used for previews)."""
+    runs = CFG["trace"]
+    D = 6.2                      # seconds per run
+    T = D * len(runs)
+    X0, Y0, PW, PH = 690, 62, 470, 282
+    bx0, bx1 = 798, 950          # waterfall region
     out = []
-    # Dense connections between adjacent layers.
-    for a, b in zip(pos, pos[1:]):
-        for x1, y1 in a:
-            for x2, y2 in b:
-                out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
-                           f'stroke="{P.ink4}" stroke-opacity="0.3" stroke-width="1"/>')
 
-    # The active layer: a capsule behind it and its header in full ink.
-    for i, (l, col) in enumerate(zip(layers, pos)):
-        x, top, bot = xs[i], col[0][1], col[-1][1]
-        out.append(f'<rect x="{x - 25:.1f}" y="{top - 25:.1f}" width="50" height="{bot - top + 50:.1f}" rx="25" '
-                   f'fill="{P.ink}" fill-opacity="{0.06 if P.mode == "dark" else 0.07}" stroke="{P.hair2}" '
-                   f'opacity="{1 if i == 0 else 0}">{window(i)}</rect>')
-        out.append(f'<text x="{x:.1f}" y="96" text-anchor="middle" class="mono" font-size="13" letter-spacing="2" '
-                   f'fill="{P.ink4}">{esc(l["layer"])}</text>'
-                   f'<text x="{x:.1f}" y="96" text-anchor="middle" class="mono" font-size="13" letter-spacing="2" '
-                   f'font-weight="600" fill="{P.ink}" opacity="{1 if i == 0 else 0}">{esc(l["layer"])}{window(i)}</text>')
+    def kt(t: float) -> str:
+        return f"{t / T:.4f}"
 
-    # Activations: pulses along routes that visit every layer.
-    routes = [[0, 1, 2, 1, 0], [1, 3, 0, 2, 0], [2, 0, 3, 0, 0], [1, 2, 1, 1, 0], [0, 3, 2, 2, 0]]
-    for j, route in enumerate(routes):
-        pts = [pos[i][min(k, len(pos[i]) - 1)] for i, k in enumerate(route[:n_layers])]
-        d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pts)
-        out.append(f'<path id="act{j}" d="{d}" fill="none"/>'
-                   f'<g opacity="0"><circle r="8" fill="url(#pulseGlow)"/><circle r="2.6" fill="{P.ink}"/>'
-                   f'<animateMotion dur="3.4s" begin="{j * 0.68:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
-                   f'keyTimes="0;0.8;1" calcMode="linear"><mpath xlink:href="#act{j}"/></animateMotion>'
-                   f'<animate attributeName="opacity" dur="3.4s" begin="{j * 0.68:.2f}s" repeatCount="indefinite" '
-                   f'values="0;1;1;0;0" keyTimes="0;0.05;0.76;0.8;1"/></g>')
+    def show(on: float, off: float) -> str:
+        """Discrete opacity: visible from on to off (seconds into the cycle)."""
+        if static_run is not None:
+            return ""
+        vals = f'values="1;0" keyTimes="0;{kt(off)}"' if on <= 0 else \
+            f'values="0;1;0" keyTimes="0;{kt(on)};{kt(off)}"'
+        return f'<animate attributeName="opacity" calcMode="discrete" {vals} dur="{T:.1f}s" repeatCount="indefinite"/>'
 
-    # Neurons: engraved rings; the active layer's cores light up.
-    for i, col in enumerate(pos):
-        last = i == n_layers - 1
-        for x, y in col:
-            r = 12 if last else 8
-            if last:
-                out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="none" stroke="{P.ink}" stroke-width="1.3">'
-                           f'<animate attributeName="r" values="{r};{r + 13}" dur="2.2s" repeatCount="indefinite"/>'
-                           f'<animate attributeName="opacity" values="0.7;0" dur="2.2s" repeatCount="indefinite"/></circle>')
-            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.4"/>'
-                       f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * 0.45:.1f}" fill="{P.ink3}"/>'
-                       f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * 0.5:.1f}" fill="{P.ink}" '
-                       f'opacity="{1 if i == 0 else 0}">{window(i)}</circle>')
+    def grow(w: float, on: float, g: float, off: float) -> str:
+        if static_run is not None:
+            return ""
+        return (f'<animate attributeName="width" values="0;0;{w:.1f};{w:.1f};0;0" '
+                f'keyTimes="0;{kt(on)};{kt(on + g)};{kt(off)};{kt(off + 0.01)};1" '
+                f'dur="{T:.1f}s" repeatCount="indefinite"/>')
 
-    # Caption: the real work behind the lit layer.
-    cx = (x_first + x_last) / 2
-    for i, l in enumerate(layers):
-        out.append(f'<text x="{cx:.1f}" y="352" text-anchor="middle" class="mono" font-size="13.5" fill="{P.ink2}" '
-                   f'opacity="{1 if i == 0 else 0}"><tspan font-weight="600" fill="{P.ink}">{esc(l["layer"])}</tspan>'
-                   f'<tspan fill="{P.ink4}">  ·  </tspan>{esc(l["caption"])}{window(i)}</text>')
-    out.append(f'<text x="{cx:.1f}" y="377" text-anchor="middle" class="mono" font-size="11.5" letter-spacing="1.2" '
-               f'fill="{P.ink4}">MY AI/ML ENGINEERING LOOP · EVERY LAYER IS SHIPPED WORK</text>')
+    # Window chrome.
+    out.append(f'<rect x="{X0}" y="{Y0}" width="{PW}" height="{PH}" rx="18" fill="{P.plate}" '
+               f'fill-opacity="{P.plate_op * 1.2:.3f}" stroke="{P.hair2}"/>')
+    for i in range(3):
+        out.append(f'<circle cx="{X0 + 20 + i * 13}" cy="{Y0 + 26}" r="3.6" fill="{P.ink4}" fill-opacity="0.7"/>')
+    out.append(f'<text x="{X0 + 62}" y="{Y0 + 31}" class="mono" font-size="12.5" letter-spacing="1.6" '
+               f'fill="{P.ink3}">TRACE REPLAY</text>'
+               f'<line x1="{X0}" y1="{Y0 + 46}" x2="{X0 + PW}" y2="{Y0 + 46}" stroke="{P.hair2}"/>')
+    if static_run is None:
+        out.append(f'<rect x="{X0}" y="{Y0 + 45.2}" height="1.6" width="0" fill="{P.ink2}" fill-opacity="0.8">'
+                   f'<animate attributeName="width" values="0;{PW}" dur="{D}s" repeatCount="indefinite"/></rect>')
+
+    for r, run in enumerate(runs):
+        start, end = r * D, r * D + D - 0.25
+        visible = static_run == r if static_run is not None else r == 0
+        g = [f'<g opacity="{1 if visible else 0}">{show(start, end)}']
+        g.append(f'<text x="{X0 + PW - 20}" y="{Y0 + 31}" text-anchor="end" class="mono" font-size="12.5" '
+                 f'fill="{P.ink2}">{esc(run["run"])}</text>')
+        spans = run["spans"]
+        total = sum(s["w"] for s in spans)
+        gap = 3
+        unit = (bx1 - bx0 - gap * (len(spans) - 1)) / total
+        x = bx0
+        for k, s in enumerate(spans):
+            y = Y0 + 72 + k * 30
+            on = start + 0.35 + k * 0.62
+            w = s["w"] * unit
+            dim = s.get("dim", False)
+            g.append(f'<g>{show(on, end)}'
+                     f'<text x="{X0 + 20}" y="{y + 4.5}" class="mono" font-size="13.5" '
+                     f'fill="{P.ink4 if dim else P.ink2}">{esc(s["name"])}</text>'
+                     f'<rect x="{bx0}" y="{y - 0.5}" width="{bx1 - bx0}" height="1" fill="{P.hair2}"/>'
+                     f'<text x="{bx1 + 14}" y="{y + 4.5}" class="mono" font-size="12.5" '
+                     f'fill="{P.ink4 if dim else P.ink3}">{esc(s["note"])}</text></g>'
+                     f'<rect x="{x:.1f}" y="{y - 4.5}" width="{w:.1f}" height="9" rx="3" '
+                     f'fill="{P.mark2 if dim else P.mark}">{grow(w, on, 0.5, end)}</rect>')
+            x += w + gap
+
+        # Outcome badge.
+        on = start + 0.35 + len(spans) * 0.62 + 0.2
+        label = run["result"]
+        bw = 44 + len(label) * 8.4
+        by = Y0 + 238
+        glyph = ('<path d="M-4.5,0.5 L-1.2,3.8 L4.8,-3.2" fill="none" stroke="{c}" stroke-width="2" '
+                 'stroke-linecap="round" stroke-linejoin="round"/>' if run["icon"] == "check" else
+                 '<path d="M-4,4 L4,-4 M-2,-4 H4 V2" fill="none" stroke="{c}" stroke-width="2" '
+                 'stroke-linecap="round" stroke-linejoin="round"/>').format(c=P.bg_bot)
+        g.append(f'<g>{show(on, end)}'
+                 f'<rect x="{X0 + 20}" y="{by - 15}" width="{bw:.0f}" height="30" rx="15" fill="{P.ink}"/>'
+                 f'<g transform="translate({X0 + 38},{by})">{glyph}</g>'
+                 f'<text x="{X0 + 52}" y="{by + 4.5}" class="mono" font-size="13" font-weight="700" '
+                 f'letter-spacing="1" fill="{P.bg_bot}">{esc(label)}</text>'
+                 f'<text x="{X0 + 20 + bw + 14:.0f}" y="{by + 4.5}" class="mono" font-size="12.5" '
+                 f'fill="{P.ink2}">{esc(run["detail"])}</text></g>')
+        g.append("</g>")
+        out.append("".join(g))
+
+    out.append(f'<text x="{X0 + PW}" y="377" text-anchor="end" class="mono" font-size="11.5" letter-spacing="1.2" '
+               f'fill="{P.ink4}">REPLAYS OF MY PIPELINES · STAGES &amp; RESULTS FROM THE REPOS</text>')
     return "".join(out)
 
 
-def hero(P, M) -> str:
+def hero(P, M, static_run: int | None = None) -> str:
     W, H = 1200, 400
     name, eyebrow, status = CFG["name"], CFG["eyebrow"], CFG["status"]
     lp = M["last_push"]
@@ -600,17 +615,18 @@ def hero(P, M) -> str:
 <text x="106" y="326" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
 <text x="66" y="377" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
 </g>
-<g class="fade" style="animation-delay:.35s">{network(P)}</g>"""
+<g class="fade" style="animation-delay:.35s">{trace(P, static_run)}</g>"""
 
-    stages = "; ".join(f"{l['layer'].title()}: {l['caption']}" for l in CFG["network"])
+    runs = "; ".join(f"{r['run']}: " + " → ".join(sp["name"] for sp in r["spans"]) + f" = {r['result'].lower()}"
+                     for r in CFG["trace"])
     defs = (chrome_gradient(P) + chrome_gradient(P, "chromeEdge", "0", "0", "1", "1")
             + shine_gradient(P, 260, (-300, 760), 7)
             + f'<radialGradient id="pulseGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.55"/>'
               f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
-                desc=f"{CFG['city']}. Status: {status}. {push_line}. Animated network of my AI/ML "
-                     f"engineering loop, one layer per stage — {stages}.")
+                desc=f"{CFG['city']}. Status: {status}. {push_line}. Animated trace viewer replaying my "
+                     f"pipelines — {runs}.")
 
 
 # --------------------------------------------------------------------------

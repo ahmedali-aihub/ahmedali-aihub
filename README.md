@@ -10,7 +10,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.svg">
-    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Animated network of my AI/ML engineering loop: data, models, agents, serving, impact." src="assets/hero-dark.svg" width="100%">
+    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Animated trace viewer replaying my pipelines: agentic RAG answering and escalating, GRU4Rec ranking, and a streaming portfolio assistant." src="assets/hero-dark.svg" width="100%">
   </picture>
 </a>
 
@@ -343,8 +343,8 @@ flowchart TB
 <!--START_SECTION:metrics-table-->
 | Metric | Value |
 |---|---:|
-| Contributions since joining | 57 |
-| Commits | 50 |
+| Contributions since joining | 51 |
+| Commits | 49 |
 | Pull requests | 0 |
 | Issues | 0 |
 | Public repositories | 5 |
@@ -366,7 +366,7 @@ flowchart TB
 
 | Month | Oct | Nov | Dec | Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 43 |
+| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 37 |
 <!--END_SECTION:metrics-table-->
 
 </details>

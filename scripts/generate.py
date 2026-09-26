@@ -1277,7 +1277,7 @@ def main() -> None:
     for P in (DARK, LIGHT):
         m = P.mode
         files = {
-            f"hero-{m}.svg": hero(P, M),
+            f"banner-{m}.svg": hero(P, M),
             f"typing-{m}.svg": typing(P, CFG["typing"]),
             f"specs-{m}.svg": specs(P, M),
             f"stats-{m}.svg": stats(P, M, stamp),

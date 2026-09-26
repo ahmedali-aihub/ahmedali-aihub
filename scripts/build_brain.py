@@ -9,7 +9,7 @@ outline changes; generate.py just reads the JSON, so the scheduled Action stays
 standard-library only.
 
     pip install numpy
-    python scripts/build_brain.py [--preview out.png]   # preview needs Pillow
+    python scripts/build_brain.py [--top] [--preview out.png]   # --top: top-view hemisphere
 """
 
 from __future__ import annotations
@@ -26,7 +26,10 @@ spec = importlib.util.spec_from_file_location("generate", HERE / "generate.py")
 gen = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gen)
 
-W, H = 318, 280          # the brain's box in hero coordinates (see generate.brain)
+MODES = {  # outline, box size in hero coordinates, grooves to carve, output file
+    "side": (lambda: gen.CEREBRUM, 318, 280, lambda: [p for p, _w in gen.BRAIN_SULCI[:2]], "brain_folds.json"),
+    "top": (lambda: gen.TOP_LEFT, 212, 270, lambda: gen.TOP_GROOVES, "brain_top_folds.json"),
+}
 CELL = 0.72              # simulation cell size in those units (smaller = finer folds)
 F, K = 0.037, 0.06       # Gray-Scott feed/kill in the labyrinth regime
 DU, DV = 1.0, 0.5
@@ -114,9 +117,13 @@ def rdp(pts, eps):
 
 
 def main() -> None:
-    _, poly = gen._catmull([(u * W, v * H) for u, v in gen.CEREBRUM], closed=True)
-    cols, rows = int(W / CELL) + 2, int(H / CELL) + 2
-    gx, gy = np.meshgrid(np.arange(cols) * CELL, np.arange(rows) * CELL)
+    mode = "top" if "--top" in sys.argv else "side"
+    outline_fn, W, H, grooves_fn, out_name = MODES[mode]
+    _, poly = gen._catmull([(u * W, v * H) for u, v in outline_fn()], closed=True)
+    x0, y0 = min(p[0] for p in poly) - 4, min(p[1] for p in poly) - 4
+    x1, y1 = max(p[0] for p in poly) + 4, max(p[1] for p in poly) + 4
+    cols, rows = int((x1 - x0) / CELL) + 1, int((y1 - y0) / CELL) + 1
+    gx, gy = np.meshgrid(x0 + np.arange(cols) * CELL, y0 + np.arange(rows) * CELL)
     mask = inside_mask(poly, gx, gy)
 
     # Grow the pattern over the whole box, then cut it to the outline, so folds
@@ -124,16 +131,15 @@ def main() -> None:
     rng = np.random.default_rng(11)
     U = np.ones((rows, cols))
     V = np.zeros((rows, cols))
-    # Start from noise everywhere so no region is left without a pattern to grow from.
-    seedmask = rng.random((rows, cols)) < 0.35
-    V[seedmask] = rng.uniform(0.2, 0.6, seedmask.sum())
-    U[seedmask] = 1.0 - V[seedmask]
-    # Carve the two deep grooves every brain has; folds then grow alongside them.
+    for _ in range(rows * cols // 160):  # seed patches; single cells die out in this regime
+        r, c = rng.integers(0, rows - 4), rng.integers(0, cols - 4)
+        V[r:r + 4, c:c + 4], U[r:r + 4, c:c + 4] = 1.0, 0.5
+    # Carve the deep grooves; folds then grow alongside them.
     groove = np.zeros((rows, cols), dtype=bool)
-    for pts, _w in gen.BRAIN_SULCI[:2]:           # lateral fissure, central sulcus
+    for pts in grooves_fn():
         _, dense = gen._catmull([(u * W, v * H) for u, v in pts], closed=False)
         for x, y in dense:
-            r0, c0 = int(round(y / CELL)), int(round(x / CELL))
+            r0, c0 = int(round((y - y0) / CELL)), int(round((x - x0) / CELL))
             groove[max(0, r0 - 2):r0 + 3, max(0, c0 - 2):c0 + 3] = True
     for _ in range(STEPS):
         uvv = U * V * V
@@ -149,7 +155,7 @@ def main() -> None:
         for x, y in line + [(-1, -1)]:
             r, c = int(round(y)), int(round(x))
             if 0 <= r < rows and 0 <= c < cols and keep[r, c]:
-                run.append((x * CELL, y * CELL))
+                run.append((x0 + x * CELL, y0 + y * CELL))
                 continue
             if len(run) > 2:
                 pts = rdp(run, 0.35)
@@ -157,10 +163,10 @@ def main() -> None:
                 if length > 6:
                     lines.append([[round(px / W, 4), round(py / H, 4)] for px, py in pts])
             run = []
-    out = HERE / "brain_folds.json"
+    out = HERE / out_name
     out.write_text(json.dumps({"source": "Gray-Scott F=%s K=%s steps=%d" % (F, K, STEPS), "folds": lines},
                               separators=(",", ":")), encoding="utf-8")
-    print(f"{len(lines)} folds, {sum(len(l) for l in lines)} points -> {out.name}")
+    print(f"{mode}: {len(lines)} folds, {sum(len(l) for l in lines)} points -> {out.name}")
 
     if "--preview" in sys.argv:
         from PIL import Image, ImageDraw

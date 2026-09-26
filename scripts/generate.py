@@ -550,6 +550,14 @@ FOLIA = [[(0.66, 0.70), (0.80, 0.655), (0.97, 0.66)], [(0.67, 0.745), (0.81, 0.7
          [(0.69, 0.79), (0.82, 0.765), (0.955, 0.76)], [(0.73, 0.83), (0.84, 0.815), (0.92, 0.80)]]
 
 
+# Top view, front at the top: the left hemisphere (the right one is its mirror image),
+# and the central sulcus carved into it before its folds are grown.
+TOP_LEFT = [(0.485, 0.035), (0.40, 0.008), (0.28, 0.022), (0.17, 0.08), (0.09, 0.18), (0.04, 0.31),
+            (0.02, 0.45), (0.025, 0.60), (0.05, 0.74), (0.11, 0.86), (0.20, 0.945), (0.31, 0.99),
+            (0.42, 0.995), (0.485, 0.965), (0.49, 0.80), (0.492, 0.62), (0.492, 0.40), (0.49, 0.20)]
+TOP_GROOVES = [[(0.485, 0.47), (0.36, 0.43), (0.22, 0.40), (0.07, 0.33)]]
+
+
 def _wiggle(pts, amp, rng):
     """Insert a sideways-offset midpoint in every segment so folds meander like gyri."""
     out = [pts[0]]
@@ -685,6 +693,223 @@ def brain(P) -> str:
     return "".join(out)
 
 
+def brain_top(P) -> str:
+    """Top view, half biology and half silicon: an organic left hemisphere with grown folds
+    and firing synapses, a circuit-board right hemisphere routed out from a glowing chip,
+    a slowly turning particle ring, and traces carrying signals out to the tech it runs on
+    (config "brain"). Seeded, so scheduled refreshes don't churn the file."""
+    import random
+    rng = random.Random(5)
+    techs = CFG["brain"]
+    cx, cy = 840, 205
+    bw, bh = 212, 270
+    bx, by = cx - bw / 2, cy - bh / 2
+    at = lambda u, v: (bx + u * bw, by + v * bh)  # noqa: E731
+    left_d, left = _catmull([at(u, v) for u, v in TOP_LEFT], closed=True)
+    right_d, right = _catmull([at(1 - u, v) for u, v in TOP_LEFT], closed=True)
+
+    def edge_dist(pt, poly):
+        return min(math.dist(pt, q) for q in poly[::2])
+
+    def crossings_y(poly, y):
+        return [x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+                for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]) if (y1 - y) * (y2 - y) <= 0 and y1 != y2]
+
+    out = []
+    # Particle ring, slowly turning, with a fine dotted orbit inside it.
+    dots = []
+    for _ in range(160):
+        a = rng.uniform(0, 2 * math.pi)
+        r = 158 + rng.gauss(0, 4.5)
+        dots.append(f'<circle cx="{cx + r * math.cos(a):.1f}" cy="{cy + r * math.sin(a):.1f}" '
+                    f'r="{rng.uniform(0.6, 1.9):.2f}" fill="{P.ink2}" opacity="{rng.uniform(0.25, 0.85):.2f}"/>')
+    out.append(f'<g>{"".join(dots)}<animateTransform attributeName="transform" type="rotate" '
+               f'from="0 {cx} {cy}" to="360 {cx} {cy}" dur="90s" repeatCount="indefinite"/></g>'
+               f'<circle cx="{cx}" cy="{cy}" r="146" fill="none" stroke="{P.ink3}" stroke-opacity="0.35" stroke-dasharray="1 9"/>'
+               f'<ellipse cx="{cx}" cy="{cy}" rx="{bw * 0.78:.0f}" ry="{bh * 0.64:.0f}" fill="url(#bloom)"/>')
+    for d in (left_d, right_d):
+        out.append(f'<path d="{d}" fill="{P.node}" fill-opacity="0.92"/><path d="{d}" fill="url(#brainFill)"/>')
+
+    # Left hemisphere — biology: grown folds, the central sulcus, synapses.
+    folds_file = Path(__file__).with_name("brain_top_folds.json")
+    folds = json.loads(folds_file.read_text(encoding="utf-8"))["folds"] if folds_file.exists() else []
+    out.append(f'<clipPath id="lh"><path d="{left_d}"/></clipPath><g clip-path="url(#lh)" filter="url(#glow)">')
+    for f in folds:
+        fd, _ = _catmull([at(u, v) for u, v in f], closed=False)
+        out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.66" stroke-width="1.05" stroke-linecap="round"/>')
+    gd, _ = _catmull(_wiggle([at(u, v) for u, v in TOP_GROOVES[0]], 2.5, rng), closed=False)
+    out.append(f'<path d="{gd}" fill="none" stroke="{P.ink}" stroke-opacity="0.72" stroke-width="1.8" stroke-linecap="round"/></g>')
+    syn: list[tuple[float, float]] = []
+    for _ in range(3000):
+        q = (bx + rng.random() * bw * 0.5, by + rng.random() * bh)
+        if _inside(q, left) and edge_dist(q, left) > 5 and all(math.dist(q, o) > 17 for o in syn):
+            syn.append(q)
+    for i, q in enumerate(syn):
+        for dd, j in sorted((math.dist(q, o), j) for j, o in enumerate(syn) if j > i)[:2]:
+            mid = ((q[0] + syn[j][0]) / 2, (q[1] + syn[j][1]) / 2)
+            if dd < 30 and _inside(mid, left):
+                fire = (f'<animate attributeName="stroke-opacity" values="0.1;0.9;0.1;0.1" keyTimes="0;0.12;0.3;1" '
+                        f'dur="{rng.uniform(3.2, 5.6):.1f}s" begin="{rng.uniform(0, 5):.1f}s" repeatCount="indefinite"/>'
+                        if rng.random() < 0.18 else "")
+                out.append(f'<line x1="{q[0]:.1f}" y1="{q[1]:.1f}" x2="{syn[j][0]:.1f}" y2="{syn[j][1]:.1f}" '
+                           f'stroke="{P.ink2}" stroke-opacity="0.1" stroke-width="0.8">{fire}</line>')
+    for x, y in syn:
+        roll = rng.random()
+        r = 2.3 if roll < 0.14 else 1.4 if roll < 0.5 else 0.9
+        tw = (f'<animate attributeName="opacity" values="1;0.2;1" dur="{rng.uniform(2.2, 4.8):.1f}s" '
+              f'begin="{rng.uniform(0, 4):.1f}s" repeatCount="indefinite"/>' if rng.random() < 0.4 else "")
+        glow = f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="url(#hubGlow)" opacity="0.75"/>' if roll < 0.14 else ""
+        out.append(f'{glow}<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{P.ink}">{tw}</circle>')
+
+    # Right hemisphere — silicon: a PCB maze routed on a grid, out from a chip.
+    cell = 7.0
+    rx0, ry0 = min(p[0] for p in right), min(p[1] for p in right)
+    cols = int((max(p[0] for p in right) - rx0) / cell) + 1
+    rows = int((max(p[1] for p in right) - ry0) / cell) + 1
+    cpt = lambda c, r: (rx0 + (c + 0.5) * cell, ry0 + (r + 0.5) * cell)  # noqa: E731
+    free = {(c, r) for c in range(cols) for r in range(rows)
+            if _inside(cpt(c, r), right) and edge_dist(cpt(c, r), right) > 4.5}
+    chip_x, chip_y = at(0.72, 0.52)
+    chip = 30
+    occ = {(c, r) for (c, r) in free
+           if abs(cpt(c, r)[0] - chip_x) < chip / 2 + 7 and abs(cpt(c, r)[1] - chip_y) < chip / 2 + 7}
+    DIRS = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
+
+    def step_ok(cur, d):
+        dc, dr = DIRS[d]
+        nxt = (cur[0] + dc, cur[1] + dr)
+        if nxt not in free or nxt in occ:
+            return None
+        if dc and dr and (cur[0] + dc, cur[1]) in occ and (cur[0], cur[1] + dr) in occ:
+            return None                       # never cross another trace diagonally
+        return nxt
+
+    def walk(start, d, maxlen, straight=0, turn=0.16):
+        path, cur = [start], start
+        occ.add(start)
+        for k in range(maxlen):
+            if k >= straight and rng.random() < turn:
+                d = (d + rng.choice((-1, 1))) % 8
+            nxt = step_ok(cur, d)
+            if nxt is None:
+                for alt in (1, -1):
+                    nxt = step_ok(cur, (d + alt) % 8)
+                    if nxt is not None:
+                        d = (d + alt) % 8
+                        break
+            if nxt is None:
+                break
+            path.append(nxt)
+            occ.add(nxt)
+            cur = nxt
+        return path
+
+    traces = []                               # (kind, [points in px])
+    for k in (-10.5, -3.5, 3.5, 10.5):
+        for (px_, py_), d in (((chip_x + chip / 2, chip_y + k), 0), ((chip_x - chip / 2, chip_y + k), 4),
+                              ((chip_x + k, chip_y + chip / 2), 2), ((chip_x + k, chip_y - chip / 2), 6)):
+            dc, dr = DIRS[d]
+            c, r = int((px_ + dc * 2 - rx0) / cell), int((py_ + dr * 2 - ry0) / cell)
+            while (c, r) in occ:
+                c, r = c + dc, r + dr
+            if (c, r) not in free:
+                continue
+            p = walk((c, r), d, 30, straight=2, turn=0.14)
+            traces.append(("pin", [(px_, py_)] + [cpt(*q) for q in p]))
+    cells = sorted(free - occ)
+    rng.shuffle(cells)
+    for start in cells:
+        if start in occ or any((start[0] + dc, start[1] + dr) in occ for dc, dr in DIRS[::2]):
+            continue
+        p = walk(start, rng.randrange(8), rng.randint(5, 30))
+        if len(p) < 3:
+            for q in p:
+                occ.discard(q)
+            continue
+        traces.append(("fill", [cpt(*q) for q in p]))
+
+    def simplify(pts):
+        keep = [pts[0]]
+        for a, b, c in zip(pts, pts[1:], pts[2:]):
+            if (b[0] - a[0]) * (c[1] - b[1]) != (b[1] - a[1]) * (c[0] - b[0]):
+                keep.append(b)
+        return keep + [pts[-1]]
+
+    circuit, vias = [], []
+    long_ones = []
+    for kind, pts in traces:
+        if len(pts) < 2:
+            continue
+        sp = simplify(pts)
+        d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in sp)
+        circuit.append(f'<path d="{d}" fill="none" stroke="{P.ink2}" stroke-opacity="0.85" stroke-width="1.35" '
+                       f'stroke-linecap="round" stroke-linejoin="round"/>')
+        vias.append(pts[-1])
+        if kind == "fill":
+            vias.append(pts[0])
+        if len(pts) > 9:
+            long_ones.append(d)
+    out.append(f'<g filter="url(#glow)">{"".join(circuit)}</g>')
+    out += [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.1" fill="{P.node}" stroke="{P.ink2}" stroke-width="1.1"/>' for x, y in vias]
+    # The chip.
+    out.append(f'<circle cx="{chip_x:.1f}" cy="{chip_y:.1f}" r="34" fill="url(#hubGlow)">'
+               f'<animate attributeName="opacity" values="0.5;1;0.5" dur="2.4s" repeatCount="indefinite"/></circle>'
+               f'<rect x="{chip_x - chip / 2:.1f}" y="{chip_y - chip / 2:.1f}" width="{chip}" height="{chip}" rx="3" '
+               f'fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.6"/>'
+               f'<rect x="{chip_x - 8:.1f}" y="{chip_y - 8:.1f}" width="16" height="16" rx="1.5" fill="{P.ink}">'
+               f'<animate attributeName="opacity" values="0.75;1;0.75" dur="2.4s" repeatCount="indefinite"/></rect>')
+
+    # Outlines: the organic side bright, the silicon side drawn mostly by its own traces.
+    out.append(f'<path d="{left_d}" fill="none" stroke="url(#chromeEdge)" stroke-width="1.7"/>'
+               f'<path d="{right_d}" fill="none" stroke="{P.ink3}" stroke-opacity="0.5" stroke-width="1.2"/>')
+
+    def pulse(ref, dur, begin, travel, r=2.4):
+        return (f'<g opacity="0"><circle r="{r * 3.2:.1f}" fill="url(#hubGlow)"/><circle r="{r}" fill="{P.ink}"/>'
+                f'<animateMotion dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
+                f'keyTimes="0;{travel};1" calcMode="linear"><mpath xlink:href="#{ref}"/></animateMotion>'
+                f'<animate attributeName="opacity" dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" '
+                f'values="0;1;1;0;0" keyTimes="0;0.04;{travel - 0.03:.2f};{travel:.2f};1"/></g>')
+
+    # Data on the circuits, and sparks crossing from biology to silicon.
+    for k, d in enumerate(rng.sample(long_ones, min(9, len(long_ones)))):
+        out.append(f'<path id="ckt{k}" d="{d}" fill="none"/>' + pulse(f"ckt{k}", rng.uniform(1.6, 3.2), rng.uniform(0, 3), 0.8, 2.0))
+    for k, v in enumerate((0.3, 0.55, 0.8)):
+        (x1, y1), (x2, _) = at(0.38, v), at(0.62, v)
+        out.append(f'<path id="cross{k}" d="M{x1:.1f},{y1:.1f} H{x2:.1f}" fill="none"/>' + pulse(f"cross{k}", 3.6, k * 1.2, 0.5, 2.2))
+
+    # Traces out to the technologies, one signal at a time.
+    T = 7.2
+    step = T / len(techs)
+    kt = lambda t: f"{(t % T) / T:.4f}"  # noqa: E731
+    for i, tech in enumerate(techs):
+        tx = 1014 + 12 * math.sin(math.pi * (i + 0.5) / len(techs))
+        ty = 96 + i * 44
+        hits = crossings_y(right, ty)
+        sx = (max(hits) if hits else cx + bw * 0.45) - 12
+        out.append(f'<path id="tech{i}" d="M{sx:.1f},{ty:.1f} H{tx - 7:.1f}" fill="none" stroke="{P.ink3}" '
+                   f'stroke-opacity="0.8" stroke-width="1.3"/>'
+                   f'<circle cx="{sx:.1f}" cy="{ty:.1f}" r="2.3" fill="{P.node}" stroke="{P.ink2}" stroke-width="1.1"/>')
+        start, arrive = i * step, i * step + 0.9
+        out.append(f'<g opacity="0"><circle r="9" fill="url(#hubGlow)"/><circle r="2.8" fill="{P.ink}"/>'
+                   f'<animateMotion dur="{T}s" repeatCount="indefinite" keyPoints="0;0;1;1" '
+                   f'keyTimes="0;{kt(start)};{kt(arrive)};1" calcMode="linear"><mpath xlink:href="#tech{i}"/></animateMotion>'
+                   f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" calcMode="discrete" '
+                   f'values="0;1;0" keyTimes="0;{kt(start)};{kt(arrive)}"/></g>')
+        a, b = arrive / T, min((arrive + step) / T, 0.999)
+        out.append(f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="6" fill="none" stroke="{P.ink}" stroke-width="1.3" opacity="0">'
+                   f'<animate attributeName="r" values="6;6;17;17" keyTimes="0;{a:.4f};{min(a + 0.12, 0.999):.4f};1" dur="{T}s" repeatCount="indefinite"/>'
+                   f'<animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;{a:.4f};{a + 0.005:.4f};{min(a + 0.12, 0.999):.4f};1" dur="{T}s" repeatCount="indefinite"/></circle>'
+                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="5.5" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.5"/>'
+                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="2.6" fill="{P.ink3}"/>'
+                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="2.8" fill="{P.ink}" opacity="0">'
+                   f'<animate attributeName="opacity" calcMode="discrete" values="0;1;0" keyTimes="0;{a:.4f};{b:.4f}" dur="{T}s" repeatCount="indefinite"/></circle>'
+                   f'<text x="{tx + 16:.1f}" y="{ty + 1:.1f}" font-size="15.5" font-weight="600" fill="{P.ink2}">{esc(tech["label"])}</text>'
+                   f'<text x="{tx + 16:.1f}" y="{ty + 1:.1f}" font-size="15.5" font-weight="600" fill="{P.ink}" opacity="0">{esc(tech["label"])}'
+                   f'<animate attributeName="opacity" calcMode="discrete" values="0;1;0" keyTimes="0;{a:.4f};{b:.4f}" dur="{T}s" repeatCount="indefinite"/></text>'
+                   f'<text x="{tx + 16:.1f}" y="{ty + 18.5:.1f}" class="mono" font-size="12.5" fill="{P.ink3}">{esc(tech["sub"])}</text>')
+    return "".join(out)
+
+
 def hero(P, M) -> str:
     W, H = 1200, 400
     name, eyebrow, status = CFG["name"], CFG["eyebrow"], CFG["status"]
@@ -710,7 +935,7 @@ def hero(P, M) -> str:
 <text x="106" y="326" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
 <text x="66" y="377" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
 </g>
-<g class="fade" style="animation-delay:.35s">{brain(P)}</g>"""
+<g class="fade" style="animation-delay:.35s">{brain_top(P)}</g>"""
 
     techs = ", ".join(f"{t['label']} ({t['sub']})" for t in CFG["brain"])
     defs = (chrome_gradient(P) + chrome_gradient(P, "chromeEdge", "0", "0", "1", "1")
@@ -723,11 +948,15 @@ def hero(P, M) -> str:
             + f'<radialGradient id="brainFill" cx="0.45" cy="0.35" r="0.7"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.07"/>'
               f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0.015"/></radialGradient>'
             + f'<radialGradient id="hubGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.6"/>'
-              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>')
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
+            + f'<radialGradient id="bloom"><stop offset="0" stop-color="{P.ink}" stop-opacity="{0.2 if P.mode == "dark" else 0.12}"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
+            + '<filter id="glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2" result="b"/>'
+              '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
-                desc=f"{CFG['city']}. Status: {status}. {push_line}. Animated wireframe brain whose roots "
-                     f"connect to the tech I build with: {techs}.")
+                desc=f"{CFG['city']}. Status: {status}. {push_line}. Top view of a brain, half organic folds and half "
+                     f"circuit board around a chip, connected to the tech I build with: {techs}.")
 
 
 # --------------------------------------------------------------------------

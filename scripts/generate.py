@@ -1074,7 +1074,7 @@ def metrics_table_md(M) -> str:
     rows = [
         ("Contributions since joining", fmt(M["total"])), ("Commits", fmt(M["commits"])),
         ("Pull requests", fmt(M["prs"])), ("Issues", fmt(M["issues"])),
-        ("Public repositories", fmt(M["repos"])), ("Stars earned", fmt(M["stars"])),
+        ("Public repositories", fmt(M["repos"])), ("Stars from others", fmt(M["stars"])),
         ("Live demos (homepage responds)", fmt(M["live_demos"])),
         ("Current streak", f'{M["streak"]} days'), ("Longest streak", f'{M["longest"]} days'),
         ("Active days since joining", f'{M["active_days"]} of {M["days_since_join"]}'),

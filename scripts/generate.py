@@ -611,7 +611,7 @@ def brain(P) -> str:
                 anim = (f'<animate attributeName="stroke-opacity" values="0.16;0.95;0.16;0.16" keyTimes="0;0.12;0.3;1" '
                         f'dur="{rng.uniform(3.2, 5.6):.1f}s" begin="{rng.uniform(0, 5):.1f}s" repeatCount="indefinite"/>')
             out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{P.ink2}" '
-                       f'stroke-opacity="0.16" stroke-width="0.9">{anim}</line>')
+                       f'stroke-opacity="0.09" stroke-width="0.8">{anim}</line>')
         if part == "cbl":
             out.append(f'<clipPath id="cblClip"><path d="{d}"/></clipPath><g clip-path="url(#cblClip)">')
             for f in FOLIA:
@@ -619,7 +619,14 @@ def brain(P) -> str:
                 out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.45" stroke-width="1"/>')
             out.append("</g>")
         if part == "cbr":
-            for pts, weight in BRAIN_SULCI:
+            folds_file = Path(__file__).with_name("brain_folds.json")
+            if folds_file.exists():
+                out.append(f'<clipPath id="cbrClip"><path d="{d}"/></clipPath><g clip-path="url(#cbrClip)">')
+                for fold in json.loads(folds_file.read_text(encoding="utf-8"))["folds"]:
+                    fd, _ = _catmull([at(u, v) for u, v in fold], closed=False)
+                    out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.55" stroke-width="1.05" stroke-linecap="round"/>')
+                out.append("</g>")
+            for pts, weight in BRAIN_SULCI[:2]:
                 sd, _ = _catmull(_wiggle([at(u, v) for u, v in pts], 3.5, rng), closed=False)
                 out.append(f'<path d="{sd}" fill="none" stroke="{P.ink2}" stroke-opacity="{0.22 + 0.2 * weight:.2f}" '
                            f'stroke-width="{weight:.1f}" stroke-linecap="round"/>')

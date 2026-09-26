@@ -91,17 +91,16 @@ It eliminated hallucinated answers on out-of-scope questions **without answering
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
 flowchart LR
-  Q([Question]) --> R["Retrieve<br/>20 candidates → cross-encoder → top 5"]
-  R --> J{"Judge<br/>LLM scores sufficiency 0–1"}
+  Q([Question]) --> R["Retrieve<br/>top 20 → rerank → top 5"]
+  R --> J{"Judge<br/>evidence 0–1"}
   J -- "≥ 0.6" --> A["Answer<br/>+ citation"]
-  J -- "< 0.6 · first try" --> W["Rewrite<br/>into documentation language"]
+  J -- "< 0.6 · first try" --> W["Rewrite<br/>in docs language"]
   W --> R
-  J -- "< 0.6 · after retry" --> E["Escalate<br/>ticket + triage summary"]
-  E --> H[("Human queue<br/>open → in progress → resolved")]
+  J -- "< 0.6 · after retry" --> E["Escalate<br/>ticket → human queue"]
   classDef gate stroke:#f5f5f7,stroke-width:2px
   classDef handoff stroke-dasharray:4 3
   class J gate
-  class E,H handoff
+  class E handoff
 ```
 
 **Stack:** `LangGraph` `LangChain` `Chroma` `all-MiniLM-L6-v2` `ms-marco cross-encoder` `OpenRouter + Gemini failover` `FastAPI` `React` `TypeScript` `Tailwind` `Docker Compose` `pytest` `GitHub Actions`

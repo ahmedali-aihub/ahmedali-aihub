@@ -89,14 +89,14 @@ It eliminated hallucinated answers on out-of-scope questions **without answering
 **How it decides.** The judge is a LangGraph conditional edge: its verdict picks which node runs next.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366'}}}%%
 flowchart TB
   Q([Question]) --> R["Retrieve<br/>top 20 → rerank → top 5"]
   R --> J{"Judge<br/>evidence 0–1"}
   J -- "≥ 0.6" --> A["Answer<br/>+ citation"]
   J -- "< 0.6 · first try" --> W["Rewrite<br/>in docs language"]
   W --> R
-  J -- "< 0.6 · after retry" --> E["Escalate<br/>ticket → human queue"]
+  J -- "< 0.6 · after retry" --> E["Escalate<br/>to a human"]
   classDef gate stroke:#f5f5f7,stroke-width:2px
   classDef handoff stroke-dasharray:4 3
   class J gate
@@ -157,7 +157,7 @@ That's **5.3× the popularity baseline**, proof the model learned session-specif
 **The data, measured:** 20,000,000 events · 4,301,849 sessions · 2,821,965 usable (more than one event) · 141,694 products · a vocabulary of about 40K tokens (top-N plus `<OTHER>`).
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','clusterBkg':'#1c1c1e','clusterBorder':'#636366'}}}%%
 flowchart TB
   CSV[("REES46 CSV<br/>20M events")] -- "LOAD DATA INFILE" --> DB[("MySQL 8<br/>events table")]
   DB --> PIPE["Offline pipeline<br/>Parquet → sessions → vocab → time split"]
@@ -201,7 +201,7 @@ flowchart TB
 Visitors ask about my skills and projects; the answer is retrieved from a hand-written knowledge base and streamed token by token through a free-tier LLM, with automatic fallback when a model is down.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e'}}}%%
 flowchart TB
   V([Visitor question]) --> I{"Contact<br/>intent?"}
   I -- yes --> D["Deterministic answer<br/>no LLM involved"]
@@ -231,7 +231,7 @@ flowchart TB
 Members, memberships, payments, PDF receipts, SMS and WhatsApp, QR check-in, expenses with P&L, CSV import and analytics for **A to Z Fitness in Mehdipatnam, Hyderabad**. It's built for how an Indian neighbourhood gym actually runs: rupees, `dd/MM/yyyy` dates, DLT-compliant SMS, and a front desk where someone is waiting while you type.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e','fontFamily':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2c2c2e','primaryTextColor':'#f5f5f7','primaryBorderColor':'#8e8e93','lineColor':'#8e8e93','textColor':'#f5f5f7','secondaryColor':'#1c1c1e','tertiaryColor':'#1c1c1e','edgeLabelBackground':'#1c1c1e'}}}%%
 flowchart TB
   SH["packages/shared<br/>Zod schemas"] -.- W
   SH -.- API

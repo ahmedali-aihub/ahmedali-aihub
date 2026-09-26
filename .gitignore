@@ -1,0 +1,3 @@
+# Local cache for `python scripts/generate.py --offline`; rebuilt on every run.
+assets/data.json
+__pycache__/

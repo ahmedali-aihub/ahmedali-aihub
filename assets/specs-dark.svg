@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="342" viewBox="0 0 1200 342" role="img" aria-labelledby="t d">
+<title id="t">Tech specs</title>
+<desc id="d">0/5 out-of-scope questions hallucinated (plain-RAG baseline, same index: 2/5); 5.3× Recall@10 over popularity baseline (GRU4Rec 0.450 vs 0.086, held-out test); 20M click events engineered into sessions (MySQL → Parquet → 2.8M usable sessions); 66 backend tests, zero API keys needed (every LLM boundary mocked · CI on push); 56 LLM candidates in the failover chain (5 keys · 2 providers · quota-aware); 200+ Vitest cases guarding money &amp; SMS (integer paise · idempotent receipts)</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1d20"/><stop offset="1" stop-color="#0a0a0b"/></linearGradient>
+<radialGradient id="glow" cx="0.18" cy="-0.1" r="0.9"><stop offset="0" stop-color="#ffffff" stop-opacity="0.07"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+<linearGradient id="bevel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9a9aa0"/><stop offset="0.35" stop-color="#2a2a2d"/><stop offset="0.75" stop-color="#2a2a2d"/><stop offset="1" stop-color="#5a5a5f"/></linearGradient>
+<linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="brush" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.0016 1.3" numOctaves="2" seed="9" result="n"/>
+<feColorMatrix in="n" type="matrix" result="hi" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.8 0 0 0 -0.4"/>
+<feColorMatrix in="n" type="matrix" result="lo" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.6 0 0 0 0.28"/>
+<feMerge><feMergeNode in="lo"/><feMergeNode in="hi"/></feMerge>
+</filter>
+<clipPath id="clip"><rect x="1" y="1" width="1198" height="340" rx="26"/></clipPath>
+<linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.42" stop-color="#e5e5ea"/><stop offset="0.5" stop-color="#8e8e93"/><stop offset="0.62" stop-color="#c7c7cc"/><stop offset="1" stop-color="#f5f5f7"/></linearGradient>
+</defs>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;}
+.mono{font-family:'SF Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;}
+.num{font-variant-numeric:tabular-nums;}
+.sweep{transform:translateX(-582px);animation:sweep 9.0s cubic-bezier(.45,0,.2,1) infinite;}
+@keyframes sweep{0%{transform:translateX(-582px) skewX(-18deg);}45%,100%{transform:translateX(1542px) skewX(-18deg);}}
+.rise{animation:rise .9s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}}
+.fade{animation:fade 1s ease both;}
+@keyframes fade{from{opacity:0;}}
+.live{animation:live 2s ease-in-out infinite;}
+@keyframes live{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;}.sweep{display:none;}}
+</style>
+<g clip-path="url(#clip)">
+<rect width="1200" height="342" fill="url(#bg)"/>
+<rect width="1200" height="342" filter="url(#brush)" opacity="0.3"/>
+<rect width="1200" height="342" fill="url(#glow)"/>
+<text x="40" y="48" font-size="15" font-weight="600" letter-spacing="3" fill="#8e8e93">TECH SPECS</text><text x="1160" y="48" text-anchor="end" class="mono" font-size="13.5" fill="#636366">every number is measured in a public repo · expand a project below for the method</text><g class="rise" style="animation-delay:0.1s"><text x="40.0" y="132" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">0/5</text><text x="40.0" y="162" font-size="18" fill="#c7c7cc">out-of-scope questions hallucinated</text><text x="40.0" y="185" class="mono" font-size="13.5" fill="#636366">plain-RAG baseline, same index: 2/5</text></g><line x1="412.3" y1="88" x2="412.3" y2="186" stroke="#2c2c2e"/><g class="rise" style="animation-delay:0.2s"><text x="439.3" y="132" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">5.3×</text><text x="439.3" y="162" font-size="18" fill="#c7c7cc">Recall@10 over popularity baseline</text><text x="439.3" y="185" class="mono" font-size="13.5" fill="#636366">GRU4Rec 0.450 vs 0.086, held-out test</text></g><line x1="785.7" y1="88" x2="785.7" y2="186" stroke="#2c2c2e"/><g class="rise" style="animation-delay:0.3s"><text x="812.7" y="132" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">20M</text><text x="812.7" y="162" font-size="18" fill="#c7c7cc">click events engineered into sessions</text><text x="812.7" y="185" class="mono" font-size="13.5" fill="#636366">MySQL → Parquet → 2.8M usable sessions</text></g><g class="rise" style="animation-delay:0.4s"><text x="40.0" y="260" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">66</text><text x="40.0" y="290" font-size="18" fill="#c7c7cc">backend tests, zero API keys needed</text><text x="40.0" y="313" class="mono" font-size="13.5" fill="#636366">every LLM boundary mocked · CI on push</text></g><line x1="412.3" y1="216" x2="412.3" y2="314" stroke="#2c2c2e"/><g class="rise" style="animation-delay:0.5s"><text x="439.3" y="260" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">56</text><text x="439.3" y="290" font-size="18" fill="#c7c7cc">LLM candidates in the failover chain</text><text x="439.3" y="313" class="mono" font-size="13.5" fill="#636366">5 keys · 2 providers · quota-aware</text></g><line x1="785.7" y1="216" x2="785.7" y2="314" stroke="#2c2c2e"/><g class="rise" style="animation-delay:0.6s"><text x="812.7" y="260" font-size="56" font-weight="600" letter-spacing="-1.5" fill="url(#chrome)">200+</text><text x="812.7" y="290" font-size="18" fill="#c7c7cc">Vitest cases guarding money &amp; SMS</text><text x="812.7" y="313" class="mono" font-size="13.5" fill="#636366">integer paise · idempotent receipts</text></g><line x1="40" y1="198" x2="1160" y2="198" stroke="#2c2c2e"/>
+<rect class="sweep" x="0" y="-342" width="240" height="1026" fill="url(#sweep)"/>
+</g>
+<rect x="1" y="1" width="1198" height="340" rx="26" fill="none" stroke="url(#bevel)" stroke-width="1.5"/>
+<rect x="3" y="3" width="1194" height="336" rx="24" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+</svg>

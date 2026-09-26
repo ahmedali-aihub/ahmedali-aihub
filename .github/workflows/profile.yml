@@ -1,0 +1,52 @@
+name: Refresh profile
+
+# Re-renders every SVG in assets/ and the README's activity + metrics sections.
+# Commits only when something actually changed.
+on:
+  schedule:
+    - cron: "23 */6 * * *"   # every 6 hours; GitHub may start scheduled runs late
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "profile.config.json"
+      - ".github/workflows/profile.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-profile
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Render SVGs and README sections
+        env:
+          # Optional: a classic PAT with read:user in METRICS_TOKEN also counts
+          # private contributions, if you've enabled them on your profile.
+          GITHUB_TOKEN: ${{ secrets.METRICS_TOKEN || secrets.GITHUB_TOKEN }}
+          PROFILE_USER: ${{ github.repository_owner }}
+        run: python scripts/generate.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets README.md
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "chore(profile): refresh live metrics"
+            git push
+          fi

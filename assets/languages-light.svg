@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="330" viewBox="0 0 600 330" role="img" aria-labelledby="t d">
+<title id="t">Top languages</title>
+<desc id="d">TypeScript 40.9% (2 repos); JavaScript 20.8% (4 repos); Python 18.3% (3 repos); CSS 9.7% (4 repos); Jupyter Notebook 5.5% (1 repos); HTML 3.9% (4 repos)</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdfdfe"/><stop offset="1" stop-color="#dcdce1"/></linearGradient>
+<radialGradient id="glow" cx="0.18" cy="-0.1" r="0.9"><stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+<linearGradient id="bevel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#a1a1a6"/><stop offset="0.75" stop-color="#a1a1a6"/><stop offset="1" stop-color="#c7c7cc"/></linearGradient>
+<linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="brush" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.0016 1.3" numOctaves="2" seed="9" result="n"/>
+<feColorMatrix in="n" type="matrix" result="hi" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.8 0 0 0 -0.4"/>
+<feColorMatrix in="n" type="matrix" result="lo" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -0.6 0 0 0 0.28"/>
+<feMerge><feMergeNode in="lo"/><feMergeNode in="hi"/></feMerge>
+</filter>
+<clipPath id="clip"><rect x="1" y="1" width="598" height="328" rx="26"/></clipPath>
+
+</defs>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;}
+.mono{font-family:'SF Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;}
+.num{font-variant-numeric:tabular-nums;}
+.sweep{transform:translateX(-570px);animation:sweep 9.0s cubic-bezier(.45,0,.2,1) infinite;}
+@keyframes sweep{0%{transform:translateX(-570px) skewX(-18deg);}45%,100%{transform:translateX(930px) skewX(-18deg);}}
+.rise{animation:rise .9s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}}
+.fade{animation:fade 1s ease both;}
+@keyframes fade{from{opacity:0;}}
+.live{animation:live 2s ease-in-out infinite;}
+@keyframes live{0%,100%{opacity:1;}50%{opacity:.35;}}
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 1.1s cubic-bezier(.2,.7,.2,1) both;}@keyframes grow{from{transform:scaleX(0);}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;}.sweep{display:none;}}
+</style>
+<g clip-path="url(#clip)">
+<rect width="600" height="330" fill="url(#bg)"/>
+<rect width="600" height="330" filter="url(#brush)" opacity="0.32"/>
+<rect width="600" height="330" fill="url(#glow)"/>
+<text x="32" y="52" font-size="22" font-weight="600" fill="#1d1d1f">Top languages</text><g><text x="568" y="50.7" text-anchor="end" class="mono" font-size="13" letter-spacing="1.2" fill="#6e6e73">LIVE · 26 SEP 2026</text><circle cx="396.0" cy="46" r="4" fill="#1d1d1f" class="live"/></g><text x="32" y="80" class="mono" font-size="12.5" fill="#8e8e93">share of code across public repos · √bytes × √repos</text><g class="rise" style="animation-delay:0.10s"><text x="32" y="120" font-size="16.5" fill="#3a3a3c">TypeScript</text><rect x="180" y="110" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,110.0H416.0A4,4 0 0 1 420.0,114.0V117.0A4,4 0 0 1 416.0,121.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.25s"/><text x="428.0" y="120.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">40.9%</text><text x="568" y="120.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">2 repos</text></g><g class="rise" style="animation-delay:0.17s"><text x="32" y="155" font-size="16.5" fill="#3a3a3c">JavaScript</text><rect x="180" y="145" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,145.0H297.8A4,4 0 0 1 301.8,149.0V152.0A4,4 0 0 1 297.8,156.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.32s"/><text x="309.8" y="155.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">20.8%</text><text x="568" y="155.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">4 repos</text></g><g class="rise" style="animation-delay:0.24s"><text x="32" y="190" font-size="16.5" fill="#3a3a3c">Python</text><rect x="180" y="180" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,180.0H283.2A4,4 0 0 1 287.2,184.0V187.0A4,4 0 0 1 283.2,191.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.39s"/><text x="295.2" y="190.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">18.3%</text><text x="568" y="190.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">3 repos</text></g><g class="rise" style="animation-delay:0.31s"><text x="32" y="225" font-size="16.5" fill="#3a3a3c">CSS</text><rect x="180" y="215" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,215.0H233.0A4,4 0 0 1 237.0,219.0V222.0A4,4 0 0 1 233.0,226.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.46s"/><text x="245.0" y="225.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">9.7%</text><text x="568" y="225.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">4 repos</text></g><g class="rise" style="animation-delay:0.38s"><text x="32" y="260" font-size="16.5" fill="#3a3a3c">Jupyter Notebook</text><rect x="180" y="250" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,250.0H208.1A4,4 0 0 1 212.1,254.0V257.0A4,4 0 0 1 208.1,261.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.53s"/><text x="220.1" y="260.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">5.5%</text><text x="568" y="260.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">1 repo</text></g><g class="rise" style="animation-delay:0.45s"><text x="32" y="295" font-size="16.5" fill="#3a3a3c">HTML</text><rect x="180" y="285" width="240" height="11" fill="#d2d2d7" fill-opacity="0.6"/><path d="M180.0,285.0H199.1A4,4 0 0 1 203.1,289.0V292.0A4,4 0 0 1 199.1,296.0H180.0Z" fill="#3a3a3c" class="grow" style="animation-delay:0.60s"/><text x="211.1" y="295.5" font-size="15" font-weight="600" class="num" fill="#1d1d1f">3.9%</text><text x="568" y="295.5" text-anchor="end" class="mono" font-size="12.5" fill="#8e8e93">4 repos</text></g>
+<rect class="sweep" x="0" y="-330" width="240" height="990" fill="url(#sweep)"/>
+</g>
+<rect x="1" y="1" width="598" height="328" rx="26" fill="none" stroke="url(#bevel)" stroke-width="1.5"/>
+<rect x="3" y="3" width="594" height="324" rx="24" fill="none" stroke="#ffffff" stroke-opacity="0.6"/>
+</svg>

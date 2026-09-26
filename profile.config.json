@@ -1,0 +1,48 @@
+{
+  "user": "ahmedali-aihub",
+  "name": "Ahmed Ali",
+  "eyebrow": "AI / ML ENGINEER  —  GENAI & AGENTIC SYSTEMS",
+  "role": "AI/ML Associate Engineer",
+  "company": "Yuva Intelli AI Solutions",
+  "city": "Hyderabad, India",
+  "status": "Building RAG pipelines & LLM agents",
+
+  "exclude_repos": ["ahmedali-aihub"],
+  "display_names": {
+    "Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation": "Agentic RAG Support Assistant",
+    "Product-Recommendation-system-Using-GRU": "GRU4Rec Session Recommender",
+    "Gym-managment-Software": "A to Z Fitness OS",
+    "Portfolio": "Portfolio + RAG assistant"
+  },
+
+  "typing": [
+    "I build systems where LLMs retrieve, reason, and act.",
+    "Agentic RAG that escalates instead of guessing.",
+    "0/5 out-of-scope questions hallucinated. Baseline: 2/5.",
+    "GRU4Rec session recommender: 5.3× the popularity baseline.",
+    "LangGraph · FastAPI · TensorFlow. Shipped, tested, measured."
+  ],
+
+  "specs": [
+    { "value": "0/5",  "label": "out-of-scope questions hallucinated", "proof": "plain-RAG baseline, same index: 2/5" },
+    { "value": "5.3×", "label": "Recall@10 over popularity baseline",  "proof": "GRU4Rec 0.450 vs 0.086, held-out test" },
+    { "value": "20M",  "label": "click events engineered into sessions", "proof": "MySQL → Parquet → 2.8M usable sessions" },
+    { "value": "66",   "label": "backend tests, zero API keys needed",  "proof": "every LLM boundary mocked · CI on push" },
+    { "value": "56",   "label": "LLM candidates in the failover chain", "proof": "5 keys · 2 providers · quota-aware" },
+    { "value": "200+", "label": "Vitest cases guarding money & SMS",    "proof": "integer paise · idempotent receipts" }
+  ],
+
+  "evals": [
+    { "label": "Recall@10 · GRU4Rec, 1M-row run", "baseline_name": "popularity",
+      "baseline": 0.0855, "model": 0.4502 },
+    { "label": "Recall@10 · 1-day prototype", "baseline_name": "popularity",
+      "baseline": 0.0700, "model": 0.3915 },
+    { "label": "Out-of-scope escalated · Agentic RAG", "baseline_name": "plain RAG",
+      "baseline": 0.0, "model": 1.0, "display": ["0/5", "5/5"] },
+    { "label": "In-scope answered · Agentic RAG", "baseline_name": "plain RAG",
+      "baseline": 1.0, "model": 1.0, "display": ["6/6", "6/6"] }
+  ],
+
+  "languages": { "top": 6, "size_weight": 0.5, "count_weight": 0.5 },
+  "activity_limit": 8
+}

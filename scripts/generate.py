@@ -560,17 +560,16 @@ def _wiggle(pts, amp, rng):
     return out
 
 
-def brain(P) -> str:
-    """A wireframe brain whose roots grow into the tech it runs on (config "brain").
-    Deterministic (seeded) so scheduled refreshes don't churn the file."""
+def brain_art(P, bx: float, by: float, bw: float, bh: float, seed: int = 7):
+    """Glowing wireframe brain: cerebrum with grown folds (scripts/brain_folds.json),
+    striated cerebellum and brainstem, drawn back to front. Seeded, so it is
+    identical on every refresh. Returns (svg, shapes, at)."""
     import random
-    rng = random.Random(7)
-    techs = CFG["brain"]
-    bx, by, bw, bh = 636, 58, 318, 280
+    rng = random.Random(seed)
+    s = bw / 318                              # detail scale vs. the size the folds were grown at
     at = lambda u, v: (bx + u * bw, by + v * bh)  # noqa: E731
     shapes = {k: _catmull([at(u, v) for u, v in pts], closed=True)
               for k, pts in (("stem", BRAINSTEM), ("cbl", CEREBELLUM), ("cbr", CEREBRUM))}
-    order = ["stem", "cbl", "cbr"]            # back to front
     covers = {"stem": ["cbl", "cbr"], "cbl": ["cbr"], "cbr": []}
 
     def visible(pt, part):
@@ -579,110 +578,303 @@ def brain(P) -> str:
     def edge_dist(pt, part):
         return min(math.dist(pt, q) for q in shapes[part][1][::3])
 
-    out = []
-    all_inner: list[tuple[float, float]] = []
-    T = 7.2
-    for part in order:
+    folds_file = Path(__file__).with_name("brain_folds.json")
+    folds = json.loads(folds_file.read_text(encoding="utf-8"))["folds"] if folds_file.exists() else []
+    out = [f'<ellipse cx="{bx + 0.5 * bw:.1f}" cy="{by + 0.42 * bh:.1f}" rx="{bw * 0.72:.1f}" '
+           f'ry="{bh * 0.66:.1f}" fill="url(#bloom)"/>']
+    for part in ("stem", "cbl", "cbr"):
         d, poly = shapes[part]
         rim = [q for q in poly[::5] if not any(_inside(q, shapes[c][1]) for c in covers[part])]
         inner: list[tuple[float, float]] = []
         for _ in range(7000 if part == "cbr" else 2500):
             q = (bx + rng.random() * bw, by + rng.random() * bh)
-            if visible(q, part) and edge_dist(q, part) > 6 and all(math.dist(q, o) > 15.5 for o in inner):
+            if visible(q, part) and edge_dist(q, part) > 6 * s and all(math.dist(q, o) > 19 * s for o in inner):
                 inner.append(q)
         nodes = rim + inner
         edges = set()
         for i, q in enumerate(nodes):
-            near = sorted((math.dist(q, o), j) for j, o in enumerate(nodes) if j != i)[:4]
-            for dd, j in near:
+            for dd, j in sorted((math.dist(q, o), j) for j, o in enumerate(nodes) if j != i)[:4]:
                 mid = ((q[0] + nodes[j][0]) / 2, (q[1] + nodes[j][1]) / 2)
-                if dd <= 31 and (_inside(mid, poly) or (i < len(rim) and j < len(rim) and dd < 20)):
+                if dd <= 36 * s and _inside(mid, poly) and not (i < len(rim) and j < len(rim)):
                     edges.add((min(i, j), max(i, j)))
-        out.append(f'<path d="{d}" fill="{P.node}" fill-opacity="0.92"/><path d="{d}" fill="url(#brainFill)"/>')
+        out.append(f'<path d="{d}" fill="{P.node}" fill-opacity="0.94"/><path d="{d}" fill="url(#brainFill)"/>')
         if part == "cbr":
             out.append(f'<ellipse cx="{bx + 0.48 * bw:.1f}" cy="{by + 0.34 * bh:.1f}" rx="{bw * 0.46:.1f}" '
                        f'ry="{bh * 0.32:.1f}" fill="url(#core)"><animate attributeName="opacity" values="0.55;1;0.55" '
                        f'dur="4.8s" repeatCount="indefinite"/></ellipse>')
-        firing = set(rng.sample(sorted(edges), min(len(edges) // 7, 26)))
+        firing = set(rng.sample(sorted(edges), min(len(edges) // 6, 34)))
         for (i, j) in sorted(edges):
             (x1, y1), (x2, y2) = nodes[i], nodes[j]
             anim = ""
             if (i, j) in firing:
-                anim = (f'<animate attributeName="stroke-opacity" values="0.16;0.95;0.16;0.16" keyTimes="0;0.12;0.3;1" '
+                anim = (f'<animate attributeName="stroke-opacity" values="0.1;0.9;0.1;0.1" keyTimes="0;0.12;0.3;1" '
                         f'dur="{rng.uniform(3.2, 5.6):.1f}s" begin="{rng.uniform(0, 5):.1f}s" repeatCount="indefinite"/>')
             out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{P.ink2}" '
-                       f'stroke-opacity="0.09" stroke-width="0.8">{anim}</line>')
+                       f'stroke-opacity="0.1" stroke-width="0.8">{anim}</line>')
         if part == "cbl":
-            out.append(f'<clipPath id="cblClip"><path d="{d}"/></clipPath><g clip-path="url(#cblClip)">')
-            for f in FOLIA:
-                fd, _ = _catmull(_wiggle([at(u, v) for u, v in f], 2, rng), closed=False)
-                out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.45" stroke-width="1"/>')
+            a0, a1 = FOLIA[0], FOLIA[-1]
+            out.append(f'<clipPath id="cblClip"><path d="{d}"/></clipPath><g clip-path="url(#cblClip)" filter="url(#glow)">')
+            for k in range(9):
+                t = k / 8
+                pts = [at(a0[m][0] * (1 - t) + a1[m][0] * t + (0.03 if m == 2 else -0.03 if m == 0 else 0),
+                          a0[m][1] * (1 - t) + a1[m][1] * t) for m in range(3)]
+                fd, _ = _catmull(_wiggle(pts, 1.6 * s, rng), closed=False)
+                out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.6" stroke-width="{1.1 * s:.2f}"/>')
             out.append("</g>")
         if part == "cbr":
-            folds_file = Path(__file__).with_name("brain_folds.json")
-            if folds_file.exists():
-                out.append(f'<clipPath id="cbrClip"><path d="{d}"/></clipPath><g clip-path="url(#cbrClip)">')
-                for fold in json.loads(folds_file.read_text(encoding="utf-8"))["folds"]:
-                    fd, _ = _catmull([at(u, v) for u, v in fold], closed=False)
-                    out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.55" stroke-width="1.05" stroke-linecap="round"/>')
-                out.append("</g>")
-            for pts, weight in BRAIN_SULCI[:2]:
-                sd, _ = _catmull(_wiggle([at(u, v) for u, v in pts], 3.5, rng), closed=False)
-                out.append(f'<path d="{sd}" fill="none" stroke="{P.ink2}" stroke-opacity="{0.22 + 0.2 * weight:.2f}" '
-                           f'stroke-width="{weight:.1f}" stroke-linecap="round"/>')
-        out.append(f'<path d="{d}" fill="none" stroke="url(#chromeEdge)" stroke-width="1.6"/>')
+            out.append(f'<clipPath id="cbrClip"><path d="{d}"/></clipPath><g clip-path="url(#cbrClip)" filter="url(#glow)">')
+            for fold in folds:
+                fd, _ = _catmull([at(u, v) for u, v in fold], closed=False)
+                out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.62" '
+                           f'stroke-width="{1.05 * s:.2f}" stroke-linecap="round"/>')
+            for pts, _w in BRAIN_SULCI[:2]:
+                sd, _ = _catmull(_wiggle([at(u, v) for u, v in pts], 3.5 * s, rng), closed=False)
+                out.append(f'<path d="{sd}" fill="none" stroke="{P.ink}" stroke-opacity="0.7" '
+                           f'stroke-width="{1.9 * s:.2f}" stroke-linecap="round"/>')
+            out.append("</g>")
+        out.append(f'<path d="{d}" fill="none" stroke="url(#chromeEdge)" stroke-width="{1.7 * s:.2f}"/>')
         for i, (x, y) in enumerate(nodes):
+            if i < len(rim):
+                continue
             roll = rng.random()
-            r = 1.1 if i < len(rim) else (2.3 if roll < 0.1 else 1.5 if roll < 0.45 else 1.0)
+            r = (2.4 if roll < 0.1 else 1.5 if roll < 0.45 else 1.0) * s
             tw = (f'<animate attributeName="opacity" values="1;0.2;1" dur="{rng.uniform(2.2, 4.8):.1f}s" '
                   f'begin="{rng.uniform(0, 4):.1f}s" repeatCount="indefinite"/>' if rng.random() < 0.35 else "")
-            glow = f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="url(#hubGlow)" opacity="0.7"/>' if r > 2 else ""
-            out.append(f'{glow}<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{P.ink}">{tw}</circle>')
-        all_inner += inner
-    inner = all_inner
-    kt = lambda t: f"{(t % T) / T:.4f}"  # noqa: E731
+            glow = f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{8 * s:.1f}" fill="url(#hubGlow)" opacity="0.75"/>' if roll < 0.1 else ""
+            out.append(f'{glow}<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.2f}" fill="{P.ink}">{tw}</circle>')
+    return "".join(out), shapes, at
 
-    # Roots: from hubs inside the brain out to each technology, one signal at a time.
-    hubs_uv = [(0.40, 0.20), (0.62, 0.22), (0.30, 0.42), (0.56, 0.44), (0.80, 0.36), (0.84, 0.72)]
-    step = T / len(techs)
-    ty0, tgap = 96, 44
-    for i, (tech, (hu, hv)) in enumerate(zip(techs, hubs_uv)):
-        hx, hy = min(inner, key=lambda q: math.dist(q, at(hu, hv)))
-        tx = 1000 + 14 * math.sin(math.pi * (i + 0.5) / len(techs))
-        ty = ty0 + i * tgap
-        c1 = (hx + 0.55 * (tx - hx), hy)
-        c2 = (tx - 0.45 * (tx - hx), ty)
-        root = f"M{hx:.1f},{hy:.1f} C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {tx - 7:.1f},{ty:.1f}"
-        # A short dendrite fork off each root.
-        fx, fy = (hx + c1[0] + c2[0] + tx) / 4, (hy + c1[1] + c2[1] + ty) / 4
-        fork = f"M{fx:.1f},{fy:.1f} q{18:.1f},{-14 if i % 2 else 14} {34:.1f},{-8 if i % 2 else 10}"
-        start, arrive = i * step, i * step + 0.9
-        out.append(f'<path id="root{i}" d="{root}" fill="none" stroke="{P.ink3}" stroke-opacity="0.7" stroke-width="1.3"/>'
-                   f'<path d="{fork}" fill="none" stroke="{P.ink3}" stroke-opacity="0.45" stroke-width="1"/>'
-                   f'<circle cx="{fx + 34:.1f}" cy="{fy + (-8 if i % 2 else 10):.1f}" r="1.6" fill="{P.ink3}"/>'
-                   f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="7" fill="url(#hubGlow)"/>'
-                   f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="2.6" fill="{P.ink}"/>')
-        # The signal.
-        out.append(f'<g opacity="0"><circle r="9" fill="url(#hubGlow)"/><circle r="2.8" fill="{P.ink}"/>'
-                   f'<animateMotion dur="{T}s" repeatCount="indefinite" keyPoints="0;0;1;1" '
-                   f'keyTimes="0;{kt(start)};{kt(arrive) if arrive < T else "1"};1" calcMode="linear">'
-                   f'<mpath xlink:href="#root{i}"/></animateMotion>'
-                   f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" calcMode="discrete" '
-                   f'values="0;1;0" keyTimes="0;{kt(start)};{kt(arrive)}"/></g>')
-        # The technology node: ripples and lights up when the signal lands.
+
+CORE_ICONS = {  # 44 × 44 line icons
+    "agent": '<rect x="9" y="15" width="26" height="21" rx="6"/><circle cx="17" cy="25.5" r="2.4"/>'
+             '<circle cx="27" cy="25.5" r="2.4"/><path d="M22 15V9"/><circle cx="22" cy="7" r="2"/>'
+             '<path d="M9 24H5M39 24H35M17 31.5H27"/>',
+    "rag": '<path d="M8 5H24L30 11V35H8Z"/><path d="M24 5V11H30"/><path d="M12 16H24M12 21H22M12 26H18"/>'
+           '<circle cx="30" cy="30" r="7"/><path d="M35 35L40 40"/>',
+    "gen": '<path d="M38 5C26 7 15 16 11 33L10 38"/><path d="M38 5C37 16 29 27 14 31"/><path d="M20 20L28 13"/>'
+           '<path d="M6 40H30"/><path d="M8 5L9.5 9L13.5 10.5L9.5 12L8 16L6.5 12L2.5 10.5L6.5 9Z"/>',
+    "llm": '<path d="M6 8H34A4 4 0 0 1 38 12V26A4 4 0 0 1 34 30H18L10 37V30H6A4 4 0 0 1 2 26V12A4 4 0 0 1 6 8Z"/>'
+           '<circle cx="12" cy="19" r="1.8"/><circle cx="20" cy="19" r="1.8"/><circle cx="28" cy="19" r="1.8"/>',
+    "ml": '<path d="M5 5V39H40"/><rect x="10" y="26" width="5" height="10"/><rect x="18" y="20" width="5" height="16"/>'
+          '<rect x="26" y="14" width="5" height="22"/><path d="M9 20L18 13L26 16L38 6"/><circle cx="38" cy="6" r="2"/>',
+    "dl": '<path d="M22 5L39 13L22 21L5 13Z"/><path d="M5 20L22 28L39 20"/><path d="M5 27L22 35L39 27"/>',
+}
+
+
+def core(P) -> str:
+    """The AI core: a glowing brain at the centre, an AI badge above and a holographic
+    platform below on one axis, and circuit traces carrying signals out to one panel
+    per technology (config "brain"), three on each side."""
+    import random
+    rng = random.Random(21)
+    W, H = 1200, 760
+    ax = W / 2
+    techs = CFG["brain"]
+    bw = 400
+    bh = bw * 280 / 318
+    bx, by = 380, 176
+    art, shapes, at = brain_art(P, bx, by, bw, bh)
+    def crossings(poly, *, y=None, x=None):
+        """Exact intersections of a closed polyline with a horizontal (y) or vertical (x) line."""
+        hits = []
+        for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]):
+            if y is not None and (y1 - y) * (y2 - y) <= 0 and y1 != y2:
+                hits.append(x1 + (y - y1) * (x2 - x1) / (y2 - y1))
+            if x is not None and (x1 - x) * (x2 - x) <= 0 and x1 != x2:
+                hits.append(y1 + (x - x1) * (y2 - y1) / (x2 - x1))
+        return hits
+
+    def edge_x(y, side):
+        xs = [h for _d, poly in shapes.values() for h in crossings(poly, y=y)]
+        return (min(xs) if side < 0 else max(xs)) if xs else None
+
+    def top_y(x):
+        return min(crossings(shapes["cbr"][1], x=x))
+
+    PW, PH = 270, 118
+    rows = [150, 330, 510]
+    panels = [(34 if i < 3 else W - 34 - PW, rows[i % 3], -1 if i < 3 else 1, t) for i, t in enumerate(techs)]
+
+    # Main traces: brain edge → panel, PCB-style with 45° chamfers.
+    mains = []
+    for i, (px, py, side, _t) in enumerate(panels):
+        ty = py + PH / 2
+        sy = by + (0.24, 0.46, 0.70)[i % 3] * bh
+        ex = edge_x(sy, side)
+        x1 = ex + side * 14
+        pe = px + PW if side < 0 else px
+        dy = ty - sy
+        if abs(dy) <= abs(pe - x1) - 22:
+            d = f"M{ex:.1f},{sy:.1f} H{x1:.1f} L{x1 + side * abs(dy):.1f},{ty:.1f} H{pe:.1f}"
+        else:
+            c, g = 12, (1 if dy > 0 else -1)
+            d = (f"M{ex:.1f},{sy:.1f} H{x1:.1f} L{x1 + side * c:.1f},{sy + g * c:.1f} V{ty - g * c:.1f} "
+                 f"L{x1 + side * 2 * c:.1f},{ty:.1f} H{pe:.1f}")
+        mains.append((d, sy, side, pe, ty))
+
+    # Decorative traces fanning out from both sides; a few run behind the panels to the edge.
+    yc = by + 0.42 * bh
+    back, deco, vias = [], [], []
+    for side in (-1, 1):
+        limit = 34 + PW + 12 if side < 0 else W - 34 - PW - 12
+        y = by + 0.08 * bh
+        while y <= by + 0.9 * bh:
+            yy, y = y, y + 15
+            if any(abs(yy - m[1]) < 10 and m[2] == side for m in mains):
+                continue
+            ex = edge_x(yy, side)
+            if ex is None:
+                continue
+            x1 = ex + side * rng.uniform(8, 22)
+            jog = (yy - yc) * 0.28
+            x2, y2 = x1 + side * abs(jog), yy + jog
+            if (side < 0 and x2 < limit) or (side > 0 and x2 > limit):
+                continue
+            if rng.random() < 0.24:
+                back.append(f"M{ex:.1f},{yy:.1f} H{x1:.1f} L{x2:.1f},{y2:.1f} H{12 if side < 0 else W - 12}")
+            else:
+                xe = x2 + side * rng.uniform(10, 46)
+                xe = max(xe, limit) if side < 0 else min(xe, limit)
+                deco.append(f"M{ex:.1f},{yy:.1f} H{x1:.1f} L{x2:.1f},{y2:.1f} H{xe:.1f}")
+                vias.append((xe, y2))
+
+    # The vertical axis: brain → AI badge above, base node → brainstem below.
+    badge_y, badge_r = 76, 42
+    node_y = 652
+    t0 = top_y(ax)
+    up_path = f"M{ax},{t0:.1f} V{badge_y + badge_r + 2}"
+    for dx in (-24, 24):
+        sgn = 1 if dx > 0 else -1
+        x0 = ax + dx
+        deco.append(f"M{x0},{top_y(x0):.1f} V170 L{x0 + sgn * 44},126 V40")
+        vias.append((x0 + sgn * 44, 40))
+    for dx in (-70, 70):
+        sgn = 1 if dx > 0 else -1
+        x0 = ax + dx
+        deco.append(f"M{x0},{top_y(x0):.1f} V150 L{x0 + sgn * 30},120 H{x0 + sgn * 120}")
+        vias.append((x0 + sgn * 120, 120))
+    stem_x, stem_y = at(0.612, 0.995)
+    base_path = f"M{ax},{node_y - 26} V{stem_y + 54:.1f} L{stem_x:.1f},{stem_y + 30:.1f} V{stem_y - 2:.1f}"
+    for u, v, sgn in ((0.83, 0.845, 1), (0.36, 0.745, -1)):
+        x0, y0 = at(u, v)
+        deco.append(f"M{x0:.1f},{y0:.1f} V{y0 + 70:.1f} L{x0 - sgn * 32:.1f},{y0 + 102:.1f} V{node_y - 40}")
+        vias.append((x0 - sgn * 32, node_y - 40))
+
+    out = []
+    # Dust.
+    for _ in range(90):
+        x, y = rng.uniform(16, W - 16), rng.uniform(16, H - 16)
+        if bx - 20 < x < bx + bw + 20 and by - 20 < y < by + bh + 20:
+            continue
+        tw = (f'<animate attributeName="opacity" values="0.7;0.1;0.7" dur="{rng.uniform(2.5, 6):.1f}s" '
+              f'begin="{rng.uniform(0, 4):.1f}s" repeatCount="indefinite"/>' if rng.random() < 0.35 else "")
+        out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rng.uniform(0.6, 1.5):.2f}" fill="{P.ink3}" '
+                   f'opacity="{rng.uniform(0.25, 0.7):.2f}">{tw}</circle>')
+    trace = lambda d, op=0.5, w=1.2, extra="": (  # noqa: E731
+        f'<path d="{d}" fill="none" stroke="{P.ink3}" stroke-opacity="{op}" stroke-width="{w}" '
+        f'stroke-linejoin="round"{extra}/>')
+    out += [trace(d, 0.28, 1.1) for d in back]
+    out.append(art)
+    out += [trace(d, 0.55, 1.2) for d in deco]
+    out.append(trace(up_path, 0.85, 1.8) + trace(base_path, 0.85, 1.8))
+    for i, (d, *_rest) in enumerate(mains):
+        out.append(f'<path id="main{i}" d="{d}" fill="none" stroke="{P.ink2}" stroke-opacity="0.85" '
+                   f'stroke-width="1.6" stroke-linejoin="round"/>')
+    out += [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.8" fill="{P.node}" stroke="{P.ink3}" stroke-width="1.2"/>'
+            for x, y in vias]
+
+    # AI badge.
+    out.append(f'<circle cx="{ax}" cy="{badge_y}" r="95" fill="url(#bloom)"/>'
+               f'<circle cx="{ax}" cy="{badge_y}" r="62" fill="none" stroke="{P.hair2}"/>'
+               f'<circle cx="{ax}" cy="{badge_y}" r="54" fill="none" stroke="{P.ink3}" stroke-opacity="0.7" '
+               f'stroke-width="1.5" stroke-dasharray="2 7"><animateTransform attributeName="transform" type="rotate" '
+               f'from="0 {ax} {badge_y}" to="360 {ax} {badge_y}" dur="40s" repeatCount="indefinite"/></circle>'
+               f'<circle cx="{ax}" cy="{badge_y}" r="{badge_r}" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="2.2"/>'
+               f'<circle cx="{ax}" cy="{badge_y}" r="{badge_r}" fill="none" stroke="{P.ink}" stroke-width="2.4" opacity="0">'
+               f'<animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.6;0.63;0.9;1" dur="2.4s" repeatCount="indefinite"/></circle>'
+               f'<text x="{ax}" y="{badge_y + 12}" text-anchor="middle" font-size="34" font-weight="700" '
+               f'letter-spacing="1" fill="url(#chrome)">AI</text>')
+
+    # Holographic base.
+    out.append(f'<path d="M{ax - 34},{node_y + 64} L{ax - 20},{node_y} H{ax + 20} L{ax + 34},{node_y + 64} Z" fill="url(#beam)"/>')
+    for rx, ry, op in ((190, 26, 0.35), (135, 18, 0.5), (82, 11, 0.75)):
+        out.append(f'<ellipse cx="{ax}" cy="{node_y + 64}" rx="{rx}" ry="{ry}" fill="none" stroke="{P.ink3}" '
+                   f'stroke-opacity="{op}" stroke-width="1.3"/>')
+    out.append(f'<ellipse cx="{ax}" cy="{node_y + 64}" rx="60" ry="8" fill="none" stroke="{P.ink}" stroke-width="1.4">'
+               f'<animate attributeName="rx" values="60;230" dur="3s" repeatCount="indefinite"/>'
+               f'<animate attributeName="ry" values="8;32" dur="3s" repeatCount="indefinite"/>'
+               f'<animate attributeName="opacity" values="0.8;0" dur="3s" repeatCount="indefinite"/></ellipse>'
+               f'<circle cx="{ax}" cy="{node_y}" r="60" fill="url(#bloom)"/>'
+               f'<circle cx="{ax}" cy="{node_y}" r="25" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="2"/>'
+               f'<circle cx="{ax}" cy="{node_y}" r="15" fill="none" stroke="{P.ink3}" stroke-width="1.3"/>'
+               f'<circle cx="{ax}" cy="{node_y}" r="5.5" fill="{P.ink}"><animate attributeName="r" values="4.5;7;4.5" '
+               f'dur="2.4s" repeatCount="indefinite"/></circle>')
+
+    # Signals.
+    def pulse(path_ref: str, dur: float, begin: float, travel: float, r: float = 2.8) -> str:
+        return (f'<g opacity="0"><circle r="{r * 3.2:.1f}" fill="url(#hubGlow)"/><circle r="{r}" fill="{P.ink}"/>'
+                f'<animateMotion dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
+                f'keyTimes="0;{travel};1" calcMode="linear"><mpath xlink:href="#{path_ref}"/></animateMotion>'
+                f'<animate attributeName="opacity" dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" '
+                f'values="0;1;1;0;0" keyTimes="0;0.04;{travel - 0.03:.2f};{travel:.2f};1"/></g>')
+
+    out.append(f'<path id="up" d="{up_path}" fill="none"/><path id="base" d="{base_path}" fill="none"/>')
+    out.append(pulse("up", 2.4, 0, 0.6) + pulse("base", 2.4, 1.2, 0.6))
+    for k, d in enumerate(rng.sample(back + deco, min(10, len(back) + len(deco)))):
+        out.append(f'<path id="deco{k}" d="{d}" fill="none"/>' + pulse(f"deco{k}", rng.uniform(2.4, 4.2), rng.uniform(0, 3), 0.7, 2.2))
+    T = 7.2
+    step = T / len(panels)
+    for i in range(len(panels)):
+        start = i * step
+        out.append(pulse(f"main{i}", T, start, round(0.9 / T, 4), 3.0))
+
+    # Panels.
+    for i, (px, py, side, t) in enumerate(panels):
+        arrive = i * step + 0.9
         a, b = arrive / T, min((arrive + step) / T, 0.999)
-        out.append(f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="6" fill="none" stroke="{P.ink}" stroke-width="1.3" opacity="0">'
-                   f'<animate attributeName="r" values="6;6;17;17" keyTimes="0;{a:.4f};{min(a + 0.12, 0.999):.4f};1" dur="{T}s" repeatCount="indefinite"/>'
-                   f'<animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;{a:.4f};{a + 0.005:.4f};{min(a + 0.12, 0.999):.4f};1" dur="{T}s" repeatCount="indefinite"/></circle>'
-                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="5.5" fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.5"/>'
-                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="2.6" fill="{P.ink3}"/>'
-                   f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="2.8" fill="{P.ink}" opacity="0">'
-                   f'<animate attributeName="opacity" calcMode="discrete" values="0;1;0" keyTimes="0;{a:.4f};{b:.4f}" dur="{T}s" repeatCount="indefinite"/></circle>'
-                   f'<text x="{tx + 16:.1f}" y="{ty + 1:.1f}" font-size="15.5" font-weight="600" fill="{P.ink2}">{esc(tech["label"])}</text>'
-                   f'<text x="{tx + 16:.1f}" y="{ty + 1:.1f}" font-size="15.5" font-weight="600" fill="{P.ink}" opacity="0">{esc(tech["label"])}'
-                   f'<animate attributeName="opacity" calcMode="discrete" values="0;1;0" keyTimes="0;{a:.4f};{b:.4f}" dur="{T}s" repeatCount="indefinite"/></text>'
-                   f'<text x="{tx + 16:.1f}" y="{ty + 18.5:.1f}" class="mono" font-size="12.5" fill="{P.ink3}">{esc(tech["sub"])}</text>')
-    return "".join(out)
+        win = (f'<animate attributeName="opacity" calcMode="discrete" values="0;1;0" keyTimes="0;{a:.4f};{b:.4f}" '
+               f'dur="{T}s" repeatCount="indefinite"/>')
+        _d, _sy, _side, pe, ty = mains[i]
+        icon_svg = CORE_ICONS.get(t.get("icon", "agent"), CORE_ICONS["agent"])
+        bars = "".join(f'<rect x="{px + PW - 58 + k * 7}" y="{py + 30 - hgt:.1f}" width="3.5" height="{hgt:.1f}" '
+                       f'rx="1" fill="{P.ink4}"/>' for k, hgt in enumerate(rng.uniform(4, 15) for _ in range(6)))
+        filled = rng.randint(5, 11)
+        segs = "".join(f'<rect x="{px + 88 + k * 14}" y="{py + PH - 24}" width="11" height="3" rx="1.5" '
+                       f'fill="{P.ink3 if k < filled else P.hair2}"/>' for k in range(12))
+        brackets = (f'<path d="M{px + 6},{py + 20} V{py + 6} H{px + 20} M{px + PW - 20},{py + 6} H{px + PW - 6} V{py + 20} '
+                    f'M{px + 6},{py + PH - 20} V{py + PH - 6} H{px + 20} M{px + PW - 20},{py + PH - 6} H{px + PW - 6} '
+                    f'V{py + PH - 20}" fill="none" stroke="{P.ink3}" stroke-width="1.5"/>')
+        out.append(f'<g class="rise" style="animation-delay:{0.15 + i * 0.1:.2f}s">'
+                   f'<rect x="{px}" y="{py}" width="{PW}" height="{PH}" rx="16" fill="{P.node}" fill-opacity="0.9" stroke="{P.hair2}"/>'
+                   f'<rect x="{px}" y="{py}" width="{PW}" height="{PH}" rx="16" fill="{P.plate}" fill-opacity="{P.plate_op}"/>'
+                   f'{brackets}{bars}{segs}'
+                   f'<g transform="translate({px + 20},{py + 32}) scale(1.2)" fill="none" stroke="{P.ink3}" stroke-width="1.5" '
+                   f'stroke-linecap="round" stroke-linejoin="round">{icon_svg}</g>'
+                   f'<g transform="translate({px + 20},{py + 32}) scale(1.2)" fill="none" stroke="{P.ink}" stroke-width="1.6" '
+                   f'stroke-linecap="round" stroke-linejoin="round" opacity="0">{icon_svg}{win}</g>'
+                   f'<text x="{px + 88}" y="{py + 54}" font-size="19" font-weight="600" fill="{P.ink}">{esc(t["label"])}</text>'
+                   f'<text x="{px + 88}" y="{py + 76}" class="mono" font-size="13" fill="{P.ink3}">{esc(t["sub"])}</text>'
+                   f'<rect x="{px}" y="{py}" width="{PW}" height="{PH}" rx="16" fill="none" stroke="{P.ink}" stroke-width="1.6" opacity="0">{win}</rect>'
+                   f'<circle cx="{pe}" cy="{ty}" r="3.6" fill="{P.ink}"/></g>')
+
+    defs = (chrome_gradient(P) + chrome_gradient(P, "chromeEdge", "0", "0", "1", "1")
+            + '<filter id="glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2" result="b"/>'
+              '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+            + f'<radialGradient id="bloom"><stop offset="0" stop-color="{P.ink}" stop-opacity="{0.2 if P.mode == "dark" else 0.12}"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
+            + f'<radialGradient id="core"><stop offset="0" stop-color="{P.ink}" stop-opacity="{0.34 if P.mode == "dark" else 0.16}"/>'
+              f'<stop offset="0.55" stop-color="{P.ink}" stop-opacity="{0.08 if P.mode == "dark" else 0.05}"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
+            + f'<radialGradient id="brainFill" cx="0.45" cy="0.35" r="0.7"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.07"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0.015"/></radialGradient>'
+            + f'<radialGradient id="hubGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.6"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
+            + f'<linearGradient id="beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.22"/>'
+              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></linearGradient>')
+    techs_desc = ", ".join(f"{t['label']} ({t['sub']})" for t in techs)
+    return card(P, W, H, "".join(out), defs=defs, rx=30, sweep_period=10, title="AI core",
+                desc=f"A glowing brain between an AI badge and a holographic base, with circuit traces "
+                     f"carrying signals to {techs_desc}.")
 
 
 def hero(P, M) -> str:
@@ -692,42 +884,55 @@ def hero(P, M) -> str:
     push_line = (f"last push  →  {display_name(lp['name'])}  ·  {fdate(parse_ts(lp['pushed_at']).date())}"
                  if lp else "")
     pill_w = 46 + len(status) * 9 + 22
+    px = W / 2 - pill_w / 2
+
+    # Faint circuit traces at both edges, echoing the AI core below.
+    import random
+    rng = random.Random(3)
+    edge = []
+    for side in (-1, 1):
+        for k in range(6):
+            y = 92 + k * 44
+            x0 = 0 if side < 0 else W
+            x1 = x0 - side * rng.uniform(50, 110)
+            jog = rng.choice((-1, 1)) * rng.uniform(8, 18)
+            xe = x1 - side * (abs(jog) + rng.uniform(30, 90))
+            d = f"M{x0},{y} H{x1:.1f} L{x1 - side * abs(jog):.1f},{y + jog:.1f} H{xe:.1f}"
+            edge.append(f'<path id="e{side}{k}" d="{d}" fill="none" stroke="{P.ink3}" stroke-opacity="0.35" stroke-width="1.2"/>'
+                        f'<circle cx="{xe:.1f}" cy="{y + jog:.1f}" r="2.6" fill="{P.node}" stroke="{P.ink3}" stroke-opacity="0.6"/>')
+            if k in (1, 4):
+                dur, begin = rng.uniform(2.6, 3.6), rng.uniform(0, 2)
+                edge.append(f'<g opacity="0"><circle r="7" fill="url(#pulseGlow)"/><circle r="2.2" fill="{P.ink}"/>'
+                            f'<animateMotion dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
+                            f'keyTimes="0;0.75;1" calcMode="linear"><mpath xlink:href="#e{side}{k}"/></animateMotion>'
+                            f'<animate attributeName="opacity" dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" '
+                            f'values="0;1;1;0;0" keyTimes="0;0.05;0.72;0.75;1"/></g>')
 
     body = f"""
-<g class="rise" style="animation-delay:.05s"><text x="64" y="90" font-size="15" font-weight="600" letter-spacing="3.4" fill="{P.ink3}">{esc(eyebrow)}</text></g>
+<g>{"".join(edge)}</g>
+<g class="rise" style="animation-delay:.05s"><text x="{W / 2}" y="94" text-anchor="middle" font-size="15" font-weight="600" letter-spacing="3.4" fill="{P.ink3}">{esc(eyebrow)}</text></g>
 <g class="rise" style="animation-delay:.15s">
-<text x="60" y="192" font-size="96" font-weight="700" letter-spacing="-3.5" fill="url(#chrome)">{esc(name)}</text>
-<text x="60" y="192" font-size="96" font-weight="700" letter-spacing="-3.5" fill="url(#textShine)">{esc(name)}</text>
+<text x="{W / 2}" y="204" text-anchor="middle" font-size="112" font-weight="700" letter-spacing="-4" fill="url(#chrome)">{esc(name)}</text>
+<text x="{W / 2}" y="204" text-anchor="middle" font-size="112" font-weight="700" letter-spacing="-4" fill="url(#textShine)">{esc(name)}</text>
 </g>
 <g class="rise" style="animation-delay:.3s">
-<text x="64" y="242" font-size="27" font-weight="500" fill="{P.ink2}">{esc(CFG['role'])}</text>
-<text x="64" y="278" font-size="19" fill="{P.ink3}">{esc(CFG['company'])}<tspan fill="{P.ink4}">  ·  </tspan>{esc(CFG['city'])}</text>
+<text x="{W / 2}" y="252" text-anchor="middle" font-size="28" font-weight="500" fill="{P.ink2}">{esc(CFG['role'])}</text>
+<text x="{W / 2}" y="286" text-anchor="middle" font-size="19" fill="{P.ink3}">{esc(CFG['company'])}<tspan fill="{P.ink4}">  ·  </tspan>{esc(CFG['city'])}</text>
 </g>
 <g class="rise" style="animation-delay:.45s">
-<rect x="64" y="302" width="{pill_w:.0f}" height="38" rx="19" fill="{P.plate}" fill-opacity="{P.plate_op * 1.5:.3f}" stroke="{P.hair2}"/>
-<circle cx="87" cy="321" r="5" fill="{P.ink}"/>
-<circle cx="87" cy="321" r="5" fill="none" stroke="{P.ink}" stroke-width="1.5"><animate attributeName="r" values="5;14" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2.2s" repeatCount="indefinite"/></circle>
-<text x="106" y="326" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
-<text x="66" y="377" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
-</g>
-<g class="fade" style="animation-delay:.35s">{brain(P)}</g>"""
+<rect x="{px:.0f}" y="308" width="{pill_w:.0f}" height="38" rx="19" fill="{P.plate}" fill-opacity="{P.plate_op * 1.5:.3f}" stroke="{P.hair2}"/>
+<circle cx="{px + 23:.0f}" cy="327" r="5" fill="{P.ink}"/>
+<circle cx="{px + 23:.0f}" cy="327" r="5" fill="none" stroke="{P.ink}" stroke-width="1.5"><animate attributeName="r" values="5;14" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2.2s" repeatCount="indefinite"/></circle>
+<text x="{px + 42:.0f}" y="332" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
+<text x="{W / 2}" y="378" text-anchor="middle" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
+</g>"""
 
-    techs = ", ".join(f"{t['label']} ({t['sub']})" for t in CFG["brain"])
-    defs = (chrome_gradient(P) + chrome_gradient(P, "chromeEdge", "0", "0", "1", "1")
-            + shine_gradient(P, 260, (-300, 760), 7)
+    defs = (chrome_gradient(P) + shine_gradient(P, 300, (150, 1100), 7)
             + f'<radialGradient id="pulseGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.55"/>'
-              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
-            + f'<radialGradient id="core"><stop offset="0" stop-color="{P.ink}" stop-opacity="{0.34 if P.mode == "dark" else 0.16}"/>'
-              f'<stop offset="0.55" stop-color="{P.ink}" stop-opacity="{0.08 if P.mode == "dark" else 0.05}"/>'
-              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
-            + f'<radialGradient id="brainFill" cx="0.45" cy="0.35" r="0.7"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.07"/>'
-              f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0.015"/></radialGradient>'
-            + f'<radialGradient id="hubGlow"><stop offset="0" stop-color="{P.ink}" stop-opacity="0.6"/>'
               f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
-                desc=f"{CFG['city']}. Status: {status}. {push_line}. Animated wireframe brain whose roots "
-                     f"connect to the tech I build with: {techs}.")
+                desc=f"{CFG['city']}. Status: {status}. {push_line}.")
 
 
 # --------------------------------------------------------------------------
@@ -1278,6 +1483,7 @@ def main() -> None:
         m = P.mode
         files = {
             f"hero-{m}.svg": hero(P, M),
+            f"core-{m}.svg": core(P),
             f"typing-{m}.svg": typing(P, CFG["typing"]),
             f"specs-{m}.svg": specs(P, M),
             f"stats-{m}.svg": stats(P, M, stamp),

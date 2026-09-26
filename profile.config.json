@@ -8,12 +8,12 @@
   "status": "Building RAG pipelines & LLM agents",
 
   "brain": [
-    { "label": "Agentic AI",       "sub": "LangGraph agents" },
-    { "label": "RAG Pipelines",    "sub": "Chroma · rerank" },
-    { "label": "Generative AI",    "sub": "SSE streaming" },
-    { "label": "LLMs",             "sub": "multi-provider" },
-    { "label": "Machine Learning", "sub": "scikit-learn" },
-    { "label": "Deep Learning",    "sub": "TensorFlow · GRU" }
+    { "label": "Agentic AI",       "sub": "LangGraph agents", "icon": "agent" },
+    { "label": "RAG Pipelines",    "sub": "Chroma · rerank",  "icon": "rag" },
+    { "label": "Generative AI",    "sub": "SSE streaming",    "icon": "gen" },
+    { "label": "LLMs",             "sub": "multi-provider",   "icon": "llm" },
+    { "label": "Machine Learning", "sub": "scikit-learn",     "icon": "ml" },
+    { "label": "Deep Learning",    "sub": "TensorFlow · GRU", "icon": "dl" }
   ],
   "exclude_repos": ["ahmedali-aihub"],
   "display_names": {

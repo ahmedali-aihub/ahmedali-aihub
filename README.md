@@ -10,9 +10,15 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.svg">
-    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Animated wireframe brain whose roots connect to Agentic AI, RAG pipelines, Generative AI, LLMs, Machine Learning and Deep Learning." src="assets/hero-dark.svg" width="100%">
+    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents." src="assets/hero-dark.svg" width="100%">
   </picture>
 </a>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/core-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/core-light.svg">
+  <img alt="AI core: a glowing brain between an AI badge and a holographic base, with circuit traces carrying signals to Agentic AI (LangGraph agents), RAG Pipelines (Chroma, rerank), Generative AI (SSE streaming), LLMs (multi-provider), Machine Learning (scikit-learn) and Deep Learning (TensorFlow, GRU)." src="assets/core-dark.svg" width="100%">
+</picture>
 
 <a href="https://portfolio-kappa-gold-87laqyj57s.vercel.app">
   <picture>
@@ -343,8 +349,8 @@ flowchart TB
 <!--START_SECTION:metrics-table-->
 | Metric | Value |
 |---|---:|
-| Contributions since joining | 60 |
-| Commits | 53 |
+| Contributions since joining | 51 |
+| Commits | 49 |
 | Pull requests | 0 |
 | Issues | 0 |
 | Public repositories | 5 |
@@ -353,7 +359,7 @@ flowchart TB
 | Current streak | 5 days |
 | Longest streak | 5 days |
 | Active days since joining | 17 of 193 |
-| Busiest day (12 mo) | 26 Sep 2026 · 10 |
+| Busiest day (12 mo) | 24 Sep 2026 · 9 |
 
 | Language | Share | Repos |
 |---|---:|---:|
@@ -366,7 +372,7 @@ flowchart TB
 
 | Month | Oct | Nov | Dec | Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 46 |
+| Contributions | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 13 | 37 |
 <!--END_SECTION:metrics-table-->
 
 </details>

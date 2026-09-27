@@ -62,6 +62,7 @@ DARK = Palette(
     mark="#d1d1d6", mark2="#636366", surface="#141416",
     heat=["#232326", "#3a3a3c", "#636366", "#a1a1a6", "#f2f2f7"],
     node="#161618",
+    cyan="#43dcff",
 )
 
 LIGHT = Palette(
@@ -78,6 +79,7 @@ LIGHT = Palette(
     mark="#3a3a3c", mark2="#aeaeb2", surface="#f2f2f5",
     heat=["#e3e3e8", "#c7c7cc", "#8e8e93", "#48484a", "#1d1d1f"],
     node="#f5f5f7",
+    cyan="#0a8db0",
 )
 
 
@@ -555,7 +557,9 @@ FOLIA = [[(0.66, 0.70), (0.80, 0.655), (0.97, 0.66)], [(0.67, 0.745), (0.81, 0.7
 TOP_LEFT = [(0.485, 0.035), (0.40, 0.008), (0.28, 0.022), (0.17, 0.08), (0.09, 0.18), (0.04, 0.31),
             (0.02, 0.45), (0.025, 0.60), (0.05, 0.74), (0.11, 0.86), (0.20, 0.945), (0.31, 0.99),
             (0.42, 0.995), (0.485, 0.965), (0.49, 0.80), (0.492, 0.62), (0.492, 0.40), (0.49, 0.20)]
-TOP_GROOVES = [[(0.485, 0.47), (0.36, 0.43), (0.22, 0.40), (0.07, 0.33)]]
+TOP_GROOVES = [[(0.485, 0.47), (0.36, 0.43), (0.22, 0.40), (0.07, 0.33)],   # central sulcus
+               [(0.33, 0.07), (0.31, 0.20), (0.33, 0.33)],                  # superior frontal sulcus
+               [(0.30, 0.58), (0.26, 0.70), (0.30, 0.84)]]                  # intraparietal sulcus
 
 
 def _wiggle(pts, amp, rng):
@@ -694,10 +698,10 @@ def brain(P) -> str:
 
 
 def brain_top(P) -> str:
-    """Top view, half biology and half silicon: an organic left hemisphere with grown folds
-    and firing synapses, a circuit-board right hemisphere routed out from a glowing chip,
-    a slowly turning particle ring, and traces carrying signals out to the tech it runs on
-    (config "brain"). Seeded, so scheduled refreshes don't churn the file."""
+    """Top view, half biology and half silicon: a left hemisphere drawn as clean anatomical
+    line-art (grown folds plus the landmark sulci), a mirrored right hemisphere filled with a
+    cyan PCB maze, a chip at the core bridging the two, and traces carrying signals out to
+    the tech it runs on (config "brain"). Seeded, so scheduled refreshes don't churn the file."""
     import random
     rng = random.Random(5)
     techs = CFG["brain"]
@@ -716,50 +720,22 @@ def brain_top(P) -> str:
                 for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]) if (y1 - y) * (y2 - y) <= 0 and y1 != y2]
 
     out = []
-    # Particle ring, slowly turning, with a fine dotted orbit inside it.
-    dots = []
-    for _ in range(160):
-        a = rng.uniform(0, 2 * math.pi)
-        r = 158 + rng.gauss(0, 4.5)
-        dots.append(f'<circle cx="{cx + r * math.cos(a):.1f}" cy="{cy + r * math.sin(a):.1f}" '
-                    f'r="{rng.uniform(0.6, 1.9):.2f}" fill="{P.ink2}" opacity="{rng.uniform(0.25, 0.85):.2f}"/>')
-    out.append(f'<g>{"".join(dots)}<animateTransform attributeName="transform" type="rotate" '
-               f'from="0 {cx} {cy}" to="360 {cx} {cy}" dur="90s" repeatCount="indefinite"/></g>'
-               f'<circle cx="{cx}" cy="{cy}" r="146" fill="none" stroke="{P.ink3}" stroke-opacity="0.35" stroke-dasharray="1 9"/>'
-               f'<ellipse cx="{cx}" cy="{cy}" rx="{bw * 0.78:.0f}" ry="{bh * 0.64:.0f}" fill="url(#bloom)"/>')
+    out.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{bw * 0.78:.0f}" ry="{bh * 0.64:.0f}" fill="url(#bloom)"/>')
     for d in (left_d, right_d):
         out.append(f'<path d="{d}" fill="{P.node}" fill-opacity="0.92"/><path d="{d}" fill="url(#brainFill)"/>')
 
     # Left hemisphere — biology: grown folds, the central sulcus, synapses.
     folds_file = Path(__file__).with_name("brain_top_folds.json")
     folds = json.loads(folds_file.read_text(encoding="utf-8"))["folds"] if folds_file.exists() else []
-    out.append(f'<clipPath id="lh"><path d="{left_d}"/></clipPath><g clip-path="url(#lh)" filter="url(#glow)">')
+    out.append(f'<clipPath id="lh"><path d="{left_d}"/></clipPath><g clip-path="url(#lh)" filter="url(#glowSoft)">')
     for f in folds:
         fd, _ = _catmull([at(u, v) for u, v in f], closed=False)
-        out.append(f'<path d="{fd}" fill="none" stroke="{P.ink2}" stroke-opacity="0.66" stroke-width="1.05" stroke-linecap="round"/>')
-    gd, _ = _catmull(_wiggle([at(u, v) for u, v in TOP_GROOVES[0]], 2.5, rng), closed=False)
-    out.append(f'<path d="{gd}" fill="none" stroke="{P.ink}" stroke-opacity="0.72" stroke-width="1.8" stroke-linecap="round"/></g>')
-    syn: list[tuple[float, float]] = []
-    for _ in range(3000):
-        q = (bx + rng.random() * bw * 0.5, by + rng.random() * bh)
-        if _inside(q, left) and edge_dist(q, left) > 5 and all(math.dist(q, o) > 17 for o in syn):
-            syn.append(q)
-    for i, q in enumerate(syn):
-        for dd, j in sorted((math.dist(q, o), j) for j, o in enumerate(syn) if j > i)[:2]:
-            mid = ((q[0] + syn[j][0]) / 2, (q[1] + syn[j][1]) / 2)
-            if dd < 30 and _inside(mid, left):
-                fire = (f'<animate attributeName="stroke-opacity" values="0.1;0.9;0.1;0.1" keyTimes="0;0.12;0.3;1" '
-                        f'dur="{rng.uniform(3.2, 5.6):.1f}s" begin="{rng.uniform(0, 5):.1f}s" repeatCount="indefinite"/>'
-                        if rng.random() < 0.18 else "")
-                out.append(f'<line x1="{q[0]:.1f}" y1="{q[1]:.1f}" x2="{syn[j][0]:.1f}" y2="{syn[j][1]:.1f}" '
-                           f'stroke="{P.ink2}" stroke-opacity="0.1" stroke-width="0.8">{fire}</line>')
-    for x, y in syn:
-        roll = rng.random()
-        r = 2.3 if roll < 0.14 else 1.4 if roll < 0.5 else 0.9
-        tw = (f'<animate attributeName="opacity" values="1;0.2;1" dur="{rng.uniform(2.2, 4.8):.1f}s" '
-              f'begin="{rng.uniform(0, 4):.1f}s" repeatCount="indefinite"/>' if rng.random() < 0.4 else "")
-        glow = f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="url(#hubGlow)" opacity="0.75"/>' if roll < 0.14 else ""
-        out.append(f'{glow}<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{P.ink}">{tw}</circle>')
+        out.append(f'<path d="{fd}" fill="none" stroke="{P.ink}" stroke-opacity="0.9" stroke-width="1" '
+                   f'stroke-linecap="round" stroke-linejoin="round"/>')
+    for g_pts in TOP_GROOVES:
+        gd, _ = _catmull(_wiggle([at(u, v) for u, v in g_pts], 2.2, rng), closed=False)
+        out.append(f'<path d="{gd}" fill="none" stroke="{P.ink}" stroke-width="1.7" stroke-linecap="round"/>')
+    out.append('</g>')
 
     # Right hemisphere — silicon: a PCB maze routed on a grid, out from a chip.
     cell = 7.0
@@ -769,8 +745,8 @@ def brain_top(P) -> str:
     cpt = lambda c, r: (rx0 + (c + 0.5) * cell, ry0 + (r + 0.5) * cell)  # noqa: E731
     free = {(c, r) for c in range(cols) for r in range(rows)
             if _inside(cpt(c, r), right) and edge_dist(cpt(c, r), right) > 4.5}
-    chip_x, chip_y = at(0.72, 0.52)
-    chip = 30
+    chip_x, chip_y = at(0.5, 0.5)
+    chip = 32
     occ = {(c, r) for (c, r) in free
            if abs(cpt(c, r)[0] - chip_x) < chip / 2 + 7 and abs(cpt(c, r)[1] - chip_y) < chip / 2 + 7}
     DIRS = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
@@ -842,7 +818,7 @@ def brain_top(P) -> str:
             continue
         sp = simplify(pts)
         d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in sp)
-        circuit.append(f'<path d="{d}" fill="none" stroke="{P.ink2}" stroke-opacity="0.85" stroke-width="1.35" '
+        circuit.append(f'<path d="{d}" fill="none" stroke="{P.cyan}" stroke-opacity="0.9" stroke-width="1.35" '
                        f'stroke-linecap="round" stroke-linejoin="round"/>')
         vias.append(pts[-1])
         if kind == "fill":
@@ -850,21 +826,26 @@ def brain_top(P) -> str:
         if len(pts) > 9:
             long_ones.append(d)
     out.append(f'<g filter="url(#glow)">{"".join(circuit)}</g>')
-    out += [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.1" fill="{P.node}" stroke="{P.ink2}" stroke-width="1.1"/>' for x, y in vias]
+    out += [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.1" fill="{P.node}" stroke="{P.cyan}" stroke-width="1.1"/>' for x, y in vias]
+    stubs = [f"M{chip_x - chip / 2:.1f},{chip_y + k:.1f} h-9" for k in (-10.5, -3.5, 3.5, 10.5)]
+    for k in (-10.5, -3.5):                   # the chip's left-hand pins reach into the organic side
+        stubs += [f"M{chip_x + k:.1f},{chip_y - chip / 2:.1f} v-9", f"M{chip_x + k:.1f},{chip_y + chip / 2:.1f} v9"]
+    out.append(f'<path d="{" ".join(stubs)}" fill="none" stroke="{P.cyan}" stroke-width="1.35" '
+               f'stroke-linecap="round" filter="url(#glow)"/>')
     # The chip.
-    out.append(f'<circle cx="{chip_x:.1f}" cy="{chip_y:.1f}" r="34" fill="url(#hubGlow)">'
+    out.append(f'<circle cx="{chip_x:.1f}" cy="{chip_y:.1f}" r="40" fill="url(#cyanGlow)">'
                f'<animate attributeName="opacity" values="0.5;1;0.5" dur="2.4s" repeatCount="indefinite"/></circle>'
                f'<rect x="{chip_x - chip / 2:.1f}" y="{chip_y - chip / 2:.1f}" width="{chip}" height="{chip}" rx="3" '
-               f'fill="{P.node}" stroke="url(#chromeEdge)" stroke-width="1.6"/>'
+               f'fill="{P.node}" stroke="{P.cyan}" stroke-width="1.7"/>'
                f'<rect x="{chip_x - 8:.1f}" y="{chip_y - 8:.1f}" width="16" height="16" rx="1.5" fill="{P.ink}">'
                f'<animate attributeName="opacity" values="0.75;1;0.75" dur="2.4s" repeatCount="indefinite"/></rect>')
 
     # Outlines: the organic side bright, the silicon side drawn mostly by its own traces.
     out.append(f'<path d="{left_d}" fill="none" stroke="url(#chromeEdge)" stroke-width="1.7"/>'
-               f'<path d="{right_d}" fill="none" stroke="{P.ink3}" stroke-opacity="0.5" stroke-width="1.2"/>')
+               f'<path d="{right_d}" fill="none" stroke="{P.cyan}" stroke-opacity="0.55" stroke-width="1.3" filter="url(#glow)"/>')
 
     def pulse(ref, dur, begin, travel, r=2.4):
-        return (f'<g opacity="0"><circle r="{r * 3.2:.1f}" fill="url(#hubGlow)"/><circle r="{r}" fill="{P.ink}"/>'
+        return (f'<g opacity="0"><circle r="{r * 3.4:.1f}" fill="url(#cyanGlow)"/><circle r="{r}" fill="{P.ink}"/>'
                 f'<animateMotion dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" keyPoints="0;1;1" '
                 f'keyTimes="0;{travel};1" calcMode="linear"><mpath xlink:href="#{ref}"/></animateMotion>'
                 f'<animate attributeName="opacity" dur="{dur:.2f}s" begin="{begin:.2f}s" repeatCount="indefinite" '
@@ -873,10 +854,6 @@ def brain_top(P) -> str:
     # Data on the circuits, and sparks crossing from biology to silicon.
     for k, d in enumerate(rng.sample(long_ones, min(9, len(long_ones)))):
         out.append(f'<path id="ckt{k}" d="{d}" fill="none"/>' + pulse(f"ckt{k}", rng.uniform(1.6, 3.2), rng.uniform(0, 3), 0.8, 2.0))
-    for k, v in enumerate((0.3, 0.55, 0.8)):
-        (x1, y1), (x2, _) = at(0.38, v), at(0.62, v)
-        out.append(f'<path id="cross{k}" d="M{x1:.1f},{y1:.1f} H{x2:.1f}" fill="none"/>' + pulse(f"cross{k}", 3.6, k * 1.2, 0.5, 2.2))
-
     # Traces out to the technologies, one signal at a time.
     T = 7.2
     step = T / len(techs)
@@ -886,11 +863,11 @@ def brain_top(P) -> str:
         ty = 96 + i * 44
         hits = crossings_y(right, ty)
         sx = (max(hits) if hits else cx + bw * 0.45) - 12
-        out.append(f'<path id="tech{i}" d="M{sx:.1f},{ty:.1f} H{tx - 7:.1f}" fill="none" stroke="{P.ink3}" '
-                   f'stroke-opacity="0.8" stroke-width="1.3"/>'
-                   f'<circle cx="{sx:.1f}" cy="{ty:.1f}" r="2.3" fill="{P.node}" stroke="{P.ink2}" stroke-width="1.1"/>')
+        out.append(f'<path id="tech{i}" d="M{sx:.1f},{ty:.1f} H{tx - 7:.1f}" fill="none" stroke="{P.cyan}" '
+                   f'stroke-opacity="0.75" stroke-width="1.3"/>'
+                   f'<circle cx="{sx:.1f}" cy="{ty:.1f}" r="2.3" fill="{P.node}" stroke="{P.cyan}" stroke-width="1.1"/>')
         start, arrive = i * step, i * step + 0.9
-        out.append(f'<g opacity="0"><circle r="9" fill="url(#hubGlow)"/><circle r="2.8" fill="{P.ink}"/>'
+        out.append(f'<g opacity="0"><circle r="10" fill="url(#cyanGlow)"/><circle r="2.8" fill="{P.ink}"/>'
                    f'<animateMotion dur="{T}s" repeatCount="indefinite" keyPoints="0;0;1;1" '
                    f'keyTimes="0;{kt(start)};{kt(arrive)};1" calcMode="linear"><mpath xlink:href="#tech{i}"/></animateMotion>'
                    f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" calcMode="discrete" '
@@ -952,7 +929,11 @@ def hero(P, M) -> str:
             + f'<radialGradient id="bloom"><stop offset="0" stop-color="{P.ink}" stop-opacity="{0.2 if P.mode == "dark" else 0.12}"/>'
               f'<stop offset="1" stop-color="{P.ink}" stop-opacity="0"/></radialGradient>'
             + '<filter id="glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2" result="b"/>'
-              '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
+              '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+            + '<filter id="glowSoft" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="0.9" result="b"/>'
+              '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+            + f'<radialGradient id="cyanGlow"><stop offset="0" stop-color="{P.cyan}" stop-opacity="{0.75 if P.mode == "dark" else 0.5}"/>'
+              f'<stop offset="1" stop-color="{P.cyan}" stop-opacity="0"/></radialGradient>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
                 desc=f"{CFG['city']}. Status: {status}. {push_line}. Top view of a brain, half organic folds and half "

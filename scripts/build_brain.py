@@ -117,7 +117,10 @@ def rdp(pts, eps):
 
 
 def main() -> None:
+    global CELL
     mode = "top" if "--top" in sys.argv else "side"
+    if mode == "top":
+        CELL = 0.52          # finer folds: the top view is drawn as dense anatomical line-art
     outline_fn, W, H, grooves_fn, out_name = MODES[mode]
     _, poly = gen._catmull([(u * W, v * H) for u, v in outline_fn()], closed=True)
     x0, y0 = min(p[0] for p in poly) - 4, min(p[1] for p in poly) - 4
@@ -131,7 +134,7 @@ def main() -> None:
     rng = np.random.default_rng(11)
     U = np.ones((rows, cols))
     V = np.zeros((rows, cols))
-    for _ in range(rows * cols // 160):  # seed patches; single cells die out in this regime
+    for _ in range(rows * cols // 120):  # seed patches; single cells die out in this regime
         r, c = rng.integers(0, rows - 4), rng.integers(0, cols - 4)
         V[r:r + 4, c:c + 4], U[r:r + 4, c:c + 4] = 1.0, 0.5
     # Carve the deep grooves; folds then grow alongside them.

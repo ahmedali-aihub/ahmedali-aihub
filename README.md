@@ -34,9 +34,9 @@
 </p>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/specs-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/specs-light.svg">
-  <img alt="Tech specs: 0/5 out-of-scope questions hallucinated (plain RAG baseline 2/5); 5.3× Recall@10 over the popularity baseline; 20M click events engineered into sessions; 66 backend tests with zero API keys; 56 LLM candidates in the failover chain; 200+ Vitest cases guarding money and SMS." src="assets/specs-dark.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/stack-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/stack-light.svg">
+  <img alt="Tech stack. Agentic Frameworks & LLMs: LangChain, LangGraph, MCP Servers, Anthropic, OpenRouter, Hugging Face, Agentic AI, Prompt Engineering. ML & Modeling: Python, NumPy, Pandas, TensorFlow, Keras, PyTorch, Scikit-learn, NLP, SHAP, Jupyter. RAG & Search: RAG, Vector DBs, FAISS. Backend & Tools: FastAPI, Streamlit, Docker, MySQL, Selenium, Playwright." src="assets/stack-dark.svg" width="100%">
 </picture>
 
 ## Hi, I'm Ahmed

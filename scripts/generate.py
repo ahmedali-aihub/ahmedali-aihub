@@ -1017,6 +1017,74 @@ def specs(P, M) -> str:
 # Stats · Streak · Languages · Evals · Trophies · Dashboard · Footer
 # --------------------------------------------------------------------------
 
+def stack(P) -> str:
+    """Tech stack in four groups (config "stack"), each tool with its brand logo in its brand
+    colour. Logos come from simple-icons and lucide, saved once in scripts/stack_icons.json."""
+    icons = json.loads(Path(__file__).with_name("stack_icons.json").read_text(encoding="utf-8"))["icons"]
+    groups = CFG["stack"]
+    W, pad, colw, gap_x = 1200, 48, 520, 88
+    fs, isz, chip_gap, row_h = 17, 21, 30, 46
+    text_w = lambda t: len(t) * fs * 0.56  # noqa: E731
+
+    def wrap(text, limit=60):
+        lines, cur = [], ""
+        for word in text.split():
+            if cur and len(cur) + 1 + len(word) > limit:
+                lines.append(cur)
+                cur = word
+            else:
+                cur = f"{cur} {word}".strip()
+        return lines + [cur]
+
+    def flow(items):
+        rows, x = [[]], 0.0
+        for label, key, color in items:
+            w = isz + 10 + text_w(label)
+            if rows[-1] and x + w > colw:
+                rows.append([])
+                x = 0.0
+            rows[-1].append((x, label, key, color))
+            x += w + chip_gap
+        return rows
+
+    def logo(key, color, x, y):
+        ic = icons.get(key)
+        if not ic:
+            return f'<circle cx="{x + isz / 2:.1f}" cy="{y + isz / 2:.1f}" r="{isz / 2.6:.1f}" fill="{color}"/>'
+        k = isz / 24
+        if ic["kind"] == "fill":
+            return f'<g transform="translate({x:.1f},{y:.1f}) scale({k:.4f})"><path d="{ic["d"]}" fill="{color}"/></g>'
+        return (f'<g transform="translate({x:.1f},{y:.1f}) scale({k:.4f})" fill="none" stroke="{color}" '
+                f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{ic["svg"]}</g>')
+
+    body = (f'<text x="{pad}" y="54" font-size="15" font-weight="600" letter-spacing="3" fill="{P.ink3}">TECH STACK</text>'
+            f'<text x="{W - pad}" y="54" text-anchor="end" class="mono" font-size="13.5" fill="{P.ink4}">'
+            f'the tools behind every project below</text>')
+    y, n = 102, 0
+    for r in range(0, len(groups), 2):
+        heights = []
+        for c, g in enumerate(groups[r:r + 2]):
+            x0 = pad + c * (colw + gap_x)
+            desc = wrap(g["description"])
+            rows = flow(g["items"])
+            body += f'<text x="{x0}" y="{y}" font-size="23" font-weight="700" fill="{P.ink}">{esc(g["group"])}</text>'
+            for i, line in enumerate(desc):
+                body += f'<text x="{x0}" y="{y + 32 + i * 23}" font-size="16" fill="{P.ink3}">{esc(line)}</text>'
+            iy = y + 32 + len(desc) * 23 + 30
+            for ri, row in enumerate(rows):
+                for dx, label, key, color in row:
+                    cy_ = iy + ri * row_h
+                    body += (f'<g class="rise" style="animation-delay:{0.05 + n * 0.03:.2f}s">'
+                             + logo(key, color, x0 + dx, cy_ - isz + 4)
+                             + f'<text x="{x0 + dx + isz + 10:.1f}" y="{cy_:.1f}" font-size="{fs}" fill="{P.ink2}">{esc(label)}</text></g>')
+                    n += 1
+            heights.append(iy + (len(rows) - 1) * row_h - y)
+        y += max(heights) + 78
+    H = int(y - 30)
+    names = "; ".join(f"{g['group']}: " + ", ".join(i[0] for i in g["items"]) for g in groups)
+    return card(P, W, H, body, title="Tech stack", desc=names)
+
+
 def sparkline(P, vals: list[int], x: float, y: float, w: float, h: float) -> str:
     if not vals:
         return ""
@@ -1489,7 +1557,7 @@ def main() -> None:
         files = {
             f"banner-{m}.svg": hero(P, M),
             f"typing-{m}.svg": typing(P, CFG["typing"]),
-            f"specs-{m}.svg": specs(P, M),
+            f"stack-{m}.svg": stack(P),
             f"stats-{m}.svg": stats(P, M, stamp),
             f"streak-{m}.svg": streak(P, M, stamp),
             f"languages-{m}.svg": languages(P, M, stamp),

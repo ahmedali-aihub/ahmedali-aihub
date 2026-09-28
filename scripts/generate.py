@@ -706,7 +706,7 @@ def brain_top(P) -> str:
     rng = random.Random(5)
     techs = CFG["brain"]
     cx, cy = 840, 205
-    bw, bh = 212, 270
+    bw, bh = 240, 270
     bx, by = cx - bw / 2, cy - bh / 2
     at = lambda u, v: (bx + u * bw, by + v * bh)  # noqa: E731
     left_d, left = _catmull([at(u, v) for u, v in TOP_LEFT], closed=True)

@@ -47,19 +47,6 @@ I'm an **AI/ML Associate Engineer at Yuva Intelli AI Solutions** in Hyderabad, b
 
 **Ask me about:** when an agent should abstain instead of answer · two-stage retrieval with cross-encoder reranking · training sequence models on a CPU budget · keeping free-tier LLM stacks alive with multi-provider failover.
 
-## How I work
-
-<sub>Pulled from my own READMEs. Each one links to where you can check it.</sub>
-
-| Principle | Where you can check it |
-|---|---|
-| **Beat a baseline or it didn't happen.** | GRU4Rec vs. popularity: [Recall@10 0.450 vs 0.086](https://github.com/ahmedali-aihub/Product-Recommendation-system-Using-GRU#13-results) · Agentic RAG vs. plain RAG: [0/5 vs 2/5 hallucinated](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation#the-result) |
-| **Abstaining beats hallucinating.** | A LangGraph judge routes weak-evidence questions to a [human escalation queue](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation#how-it-decides) |
-| **Report errors by direction, because they don't cost the same.** | Over-escalated vs. wrongly answered, with a [threshold sweep from 0.3 to 0.9](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation#evaluating-it) |
-| **Tests shouldn't need an API key.** | 66 backend tests with every LLM boundary mocked, [run in CI](https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation/actions/workflows/ci.yml) |
-| **Money is integer paise. Never floats.** | [A to Z Fitness OS](https://github.com/ahmedali-aihub/Gym-managment-Software#notes-for-whoever-works-on-this-next) billing, with a regression test for a 20-paise rounding bug |
-| **Ship the limitations section.** | Every case study below ends with one |
-
 ## Selected work
 
 > **Click a project to open its case study:** architecture (live Mermaid, so you can zoom and pan it), measured results, the design decisions a reviewer would question, and what's still missing.

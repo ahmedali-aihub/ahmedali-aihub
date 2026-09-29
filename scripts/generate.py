@@ -1085,6 +1085,32 @@ def stack(P) -> str:
     return card(P, W, H, body, title="Tech stack", desc=names)
 
 
+def button(P, link: dict) -> str:
+    """A titanium pill button for one link (config "links"): brand-coloured icon, title,
+    one-line subtitle and an arrow. Each button is its own image so each stays clickable."""
+    icons = json.loads(Path(__file__).with_name("stack_icons.json").read_text(encoding="utf-8"))["icons"]
+    W, H = 300, 72
+    color = {"cyan": P.cyan, "ink": P.ink}.get(link["color"], link["color"])
+    if link["color"] == "#0A66C2" and P.mode == "dark":
+        color = "#3D8FEF"                    # LinkedIn blue, lifted for contrast on black
+
+    def glyph(key, x, y, size, col, sw=2):
+        ic = icons[key]
+        k = size / 24
+        if ic["kind"] == "fill":
+            return f'<g transform="translate({x},{y}) scale({k:.4f})"><path d="{ic["d"]}" fill="{col}"/></g>'
+        return (f'<g transform="translate({x},{y}) scale({k:.4f})" fill="none" stroke="{col}" stroke-width="{sw}" '
+                f'stroke-linecap="round" stroke-linejoin="round">{ic["svg"]}</g>')
+
+    body = (f'<circle cx="38" cy="36" r="22" fill="{color}" fill-opacity="{0.16 if P.mode == "dark" else 0.12}"/>'
+            f'<circle cx="38" cy="36" r="22" fill="none" stroke="{color}" stroke-opacity="0.45"/>'
+            + glyph(link["icon"], 27, 25, 22, color)
+            + f'<text x="72" y="33" font-size="20" font-weight="600" fill="{P.ink}">{esc(link["title"])}</text>'
+              f'<text x="72" y="53" class="mono" font-size="13.5" fill="{P.ink3}">{esc(link["sub"])}</text>'
+            + glyph("arrow", W - 42, 25, 20, P.ink3, 2.2))
+    return card(P, W, H, body, rx=36, sweep_period=7, title=link["title"], desc=f'{link["title"]}: {link["sub"]}')
+
+
 def sparkline(P, vals: list[int], x: float, y: float, w: float, h: float) -> str:
     if not vals:
         return ""
@@ -1558,6 +1584,7 @@ def main() -> None:
             f"banner-{m}.svg": hero(P, M),
             f"typing-{m}.svg": typing(P, CFG["typing"]),
             f"stack-{m}.svg": stack(P),
+            **{f"btn-{l['id']}-{m}.svg": button(P, l) for l in CFG.get("links", [])},
             f"stats-{m}.svg": stats(P, M, stamp),
             f"streak-{m}.svg": streak(P, M, stamp),
             f"languages-{m}.svg": languages(P, M, stamp),

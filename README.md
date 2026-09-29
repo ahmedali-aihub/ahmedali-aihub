@@ -23,14 +23,14 @@
 </a>
 
 <p align="center">
-  <sub>↑ It's a prompt bar for a reason: click it to question my portfolio's live RAG assistant about my work.</sub>
+  <sub>↑ Click the prompt bar to ask my portfolio's RAG assistant anything about my work.</sub>
 </p>
 
 <p align="center">
-  <a href="https://portfolio-kappa-gold-87laqyj57s.vercel.app"><img alt="Portfolio" src="https://img.shields.io/badge/Portfolio-live-48484a?style=for-the-badge&labelColor=1c1c1e&logo=vercel&logoColor=f5f5f7"></a>
-  <a href="https://www.linkedin.com/in/ahmed-ali-aiml2006/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-Ahmed_Ali-48484a?style=for-the-badge&labelColor=1c1c1e&logoColor=f5f5f7"></a>
-  <a href="https://product-recommendation-system-using-wine.vercel.app"><img alt="Live GRU4Rec demo" src="https://img.shields.io/badge/Demo-GRU4Rec_store-48484a?style=for-the-badge&labelColor=1c1c1e&logo=tensorflow&logoColor=f5f5f7"></a>
-  <a href="https://github.com/ahmedali-aihub?tab=followers"><img alt="Follow on GitHub" src="https://img.shields.io/badge/Follow-@ahmedali--aihub-48484a?style=for-the-badge&labelColor=1c1c1e&logo=github&logoColor=f5f5f7"></a>
+  <a href="https://portfolio-kappa-gold-87laqyj57s.vercel.app"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-portfolio-dark.svg"><source media="(prefers-color-scheme: light)" srcset="assets/btn-portfolio-light.svg"><img alt="Portfolio: live RAG assistant" src="assets/btn-portfolio-dark.svg" width="24%"></picture></a>
+  <a href="https://www.linkedin.com/in/ahmed-ali-aiml2006/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-linkedin-dark.svg"><source media="(prefers-color-scheme: light)" srcset="assets/btn-linkedin-light.svg"><img alt="LinkedIn: let's connect" src="assets/btn-linkedin-dark.svg" width="24%"></picture></a>
+  <a href="https://product-recommendation-system-using-wine.vercel.app"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-demo-dark.svg"><source media="(prefers-color-scheme: light)" srcset="assets/btn-demo-light.svg"><img alt="Live demo: GRU4Rec storefront" src="assets/btn-demo-dark.svg" width="24%"></picture></a>
+  <a href="https://github.com/ahmedali-aihub?tab=followers"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-github-dark.svg"><source media="(prefers-color-scheme: light)" srcset="assets/btn-github-light.svg"><img alt="Follow: @ahmedali-aihub" src="assets/btn-github-dark.svg" width="24%"></picture></a>
 </p>
 
 <picture>

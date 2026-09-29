@@ -346,18 +346,6 @@ flowchart TB
 
 </details>
 
-## Recent activity
-
-<!--START_SECTION:activity-->
-- <code>25 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Gym-managment-Software">A to Z Fitness OS</a>
-- <code>24 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Gym-managment-Software">A to Z Fitness OS</a> <sub>· 8 pushes</sub>
-- <code>23 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Gym-managment-Software">A to Z Fitness OS</a> <sub>· 15 pushes</sub>
-- <code>22 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation">Agentic RAG Support Assistant</a>
-- <code>15 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation">Agentic RAG Support Assistant</a> <sub>· 6 pushes</sub>
-- <code>13 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation">Agentic RAG Support Assistant</a> <sub>· 9 pushes</sub>
-- <code>12 Sep</code>&nbsp; Pushed to <a href="https://github.com/ahmedali-aihub/Agentic-RAG-Support-Assistant-with-Confidence-Based-Escalation">Agentic RAG Support Assistant</a> <sub>· 5 pushes</sub>
-<!--END_SECTION:activity-->
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/divider-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/divider-light.svg">

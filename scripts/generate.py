@@ -1571,7 +1571,6 @@ def main() -> None:
 
     if README.exists():
         text = README.read_text(encoding="utf-8")
-        text = replace_section(text, "activity", activity_md(data, CFG.get("activity_limit", 8)))
         text = replace_section(text, "metrics-table", metrics_table_md(M))
         README.write_text(text, encoding="utf-8", newline="\n")
         print("  updated README activity + metrics table")

@@ -1585,10 +1585,6 @@ def main() -> None:
             f"typing-{m}.svg": typing(P, CFG["typing"]),
             f"stack-{m}.svg": stack(P),
             **{f"btn-{l['id']}-{m}.svg": button(P, l) for l in CFG.get("links", [])},
-            f"stats-{m}.svg": stats(P, M, stamp),
-            f"streak-{m}.svg": streak(P, M, stamp),
-            f"languages-{m}.svg": languages(P, M, stamp),
-            f"evals-{m}.svg": evals(P),
             f"footer-{m}.svg": footer(P),
             f"divider-{m}.svg": divider(P),
         }
@@ -1598,7 +1594,6 @@ def main() -> None:
 
     if README.exists():
         text = README.read_text(encoding="utf-8")
-        text = replace_section(text, "metrics-table", metrics_table_md(M))
         README.write_text(text, encoding="utf-8", newline="\n")
         print("  updated README activity + metrics table")
 

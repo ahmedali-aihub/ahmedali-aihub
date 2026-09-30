@@ -890,9 +890,6 @@ def brain_top(P) -> str:
 def hero(P, M) -> str:
     W, H = 1200, 400
     name, eyebrow, status = CFG["name"], CFG["eyebrow"], CFG["status"]
-    lp = M["last_push"]
-    push_line = (f"last push  →  {display_name(lp['name'])}  ·  {fdate(parse_ts(lp['pushed_at']).date())}"
-                 if lp else "")
     pill_w = 46 + len(status) * 9 + 22
 
     body = f"""
@@ -910,7 +907,6 @@ def hero(P, M) -> str:
 <circle cx="87" cy="321" r="5" fill="{P.ink}"/>
 <circle cx="87" cy="321" r="5" fill="none" stroke="{P.ink}" stroke-width="1.5"><animate attributeName="r" values="5;14" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2.2s" repeatCount="indefinite"/></circle>
 <text x="106" y="326" class="mono" font-size="15" fill="{P.ink2}">{esc(status)}</text>
-<text x="66" y="377" class="mono" font-size="14" fill="{P.ink4}">{esc(push_line)}</text>
 </g>
 <g class="fade" style="animation-delay:.35s">{brain_top(P)}</g>"""
 
@@ -936,7 +932,7 @@ def hero(P, M) -> str:
               f'<stop offset="1" stop-color="{P.cyan}" stop-opacity="0"/></radialGradient>')
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
-                desc=f"{CFG['city']}. Status: {status}. {push_line}. Top view of a brain, half organic folds and half "
+                desc=f"{CFG['city']}. Status: {status}. Top view of a brain, half organic folds and half "
                      f"circuit board around a chip, connected to the tech I build with: {techs}.")
 
 

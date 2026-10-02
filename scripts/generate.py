@@ -1045,11 +1045,13 @@ def stack(P) -> str:
 
     def logo(key, color, x, y):
         ic = icons.get(key)
+        color = P.ink if color == "ink" else color   # monochrome logos (GitHub, Ollama) follow the theme
         if not ic:
             return f'<circle cx="{x + isz / 2:.1f}" cy="{y + isz / 2:.1f}" r="{isz / 2.6:.1f}" fill="{color}"/>'
         k = isz / 24
         if ic["kind"] == "fill":
-            return f'<g transform="translate({x:.1f},{y:.1f}) scale({k:.4f})"><path d="{ic["d"]}" fill="{color}"/></g>'
+            rule = f' fill-rule="{ic["rule"]}"' if "rule" in ic else ""
+            return f'<g transform="translate({x:.1f},{y:.1f}) scale({k:.4f})"><path d="{ic["d"]}" fill="{color}"{rule}/></g>'
         return (f'<g transform="translate({x:.1f},{y:.1f}) scale({k:.4f})" fill="none" stroke="{color}" '
                 f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{ic["svg"]}</g>')
 

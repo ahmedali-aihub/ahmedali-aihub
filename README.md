@@ -35,7 +35,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/stack-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/stack-light.svg">
-  <img alt="Tech stack. Agentic Frameworks & LLMs: LangChain, LangGraph, MCP Servers, Anthropic, OpenRouter, Hugging Face, Agentic AI, Prompt Engineering. ML & Modeling: Python, NumPy, Pandas, TensorFlow, Keras, PyTorch, Scikit-learn, NLP, SHAP, Jupyter. RAG & Search: RAG, Vector DBs, FAISS. Backend & Tools: FastAPI, Streamlit, Docker, MySQL, Selenium, Playwright." src="assets/stack-dark.svg" width="100%">
+  <img alt="Tech stack. Agentic Frameworks & LLMs: LangChain, LangGraph, MCP Servers, Anthropic, OpenRouter, Hugging Face, Agentic AI, Prompt Engineering. ML & Modeling: Python, NumPy, Pandas, TensorFlow, Keras, PyTorch, Scikit-learn, NLP, SHAP, Jupyter. RAG & Search: RAG, Vector DBs, FAISS. LLM Inference, Evals & Safety: Transformers, Ollama, vLLM, LLM Inference, LangSmith, LLM Evals, LLM Guardrails. Backend & Tools: FastAPI, Streamlit, Docker, MySQL, Selenium, Playwright, REST APIs. Developer Workflow: Git, GitHub, Claude Code." src="assets/stack-dark.svg" width="100%">
 </picture>
 
 ## Hi, I'm Ahmed

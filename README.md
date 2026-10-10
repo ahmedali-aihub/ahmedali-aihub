@@ -10,7 +10,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
-    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Animated wireframe brain whose roots connect to Agentic AI, RAG pipelines, Generative AI, LLMs, Machine Learning and Deep Learning." src="assets/banner-dark.svg" width="100%">
+    <img alt="Ahmed Ali — AI/ML Associate Engineer at Yuva Intelli AI Solutions, Hyderabad, India. Status: building RAG pipelines and LLM agents. Top view of a brain, half organic folds and half circuit board, around a glowing AI chip wired to Agentic AI, RAG pipelines, Generative AI, LLMs, Machine Learning and Deep Learning." src="assets/banner-dark.svg" width="100%">
   </picture>
 </a>
 

@@ -700,7 +700,7 @@ def brain(P) -> str:
 def brain_top(P) -> str:
     """Top view, half biology and half silicon: a left hemisphere drawn as clean anatomical
     line-art (grown folds plus the landmark sulci), a mirrored right hemisphere filled with a
-    cyan PCB maze, a chip at the core bridging the two, and traces carrying signals out to
+    cyan PCB maze, an "AI" chip at the core bridging the two, and traces carrying signals out to
     the tech it runs on (config "brain"). Seeded, so scheduled refreshes don't churn the file."""
     import random
     rng = random.Random(5)
@@ -746,9 +746,11 @@ def brain_top(P) -> str:
     free = {(c, r) for c in range(cols) for r in range(rows)
             if _inside(cpt(c, r), right) and edge_dist(cpt(c, r), right) > 4.5}
     chip_x, chip_y = at(0.5, 0.5)
-    chip = 32
+    chip, leg = 62, 6
+    half = chip / 2
+    PINS = [(j - 3.5) * cell for j in range(8)]   # eight legs a side, pitched to the routing grid
     occ = {(c, r) for (c, r) in free
-           if abs(cpt(c, r)[0] - chip_x) < chip / 2 + 7 and abs(cpt(c, r)[1] - chip_y) < chip / 2 + 7}
+           if abs(cpt(c, r)[0] - chip_x) < half + leg + 4 and abs(cpt(c, r)[1] - chip_y) < half + leg + 4}
     DIRS = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
 
     def step_ok(cur, d):
@@ -781,14 +783,17 @@ def brain_top(P) -> str:
         return path
 
     traces = []                               # (kind, [points in px])
-    for k in (-10.5, -3.5, 3.5, 10.5):
-        for (px_, py_), d in (((chip_x + chip / 2, chip_y + k), 0), ((chip_x - chip / 2, chip_y + k), 4),
-                              ((chip_x + k, chip_y + chip / 2), 2), ((chip_x + k, chip_y - chip / 2), 6)):
+    stubs = []                                # legs with no silicon to route into: short electrodes
+    for j, k in enumerate(PINS):
+        for (px_, py_), d in (((chip_x + half + leg, chip_y + k), 0), ((chip_x - half - leg, chip_y + k), 4),
+                              ((chip_x + k, chip_y + half + leg), 2), ((chip_x + k, chip_y - half - leg), 6)):
             dc, dr = DIRS[d]
             c, r = int((px_ + dc * 2 - rx0) / cell), int((py_ + dr * 2 - ry0) / cell)
             while (c, r) in occ:
                 c, r = c + dc, r + dr
             if (c, r) not in free:
+                reach = 6 + 5 * (j % 2)
+                stubs.append(((px_, py_), (px_ + dc * reach, py_ + dr * reach)))
                 continue
             p = walk((c, r), d, 30, straight=2, turn=0.14)
             traces.append(("pin", [(px_, py_)] + [cpt(*q) for q in p]))
@@ -827,22 +832,66 @@ def brain_top(P) -> str:
             long_ones.append(d)
     out.append(f'<g filter="url(#glow)">{"".join(circuit)}</g>')
     out += [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.1" fill="{P.node}" stroke="{P.cyan}" stroke-width="1.1"/>' for x, y in vias]
-    stubs = [f"M{chip_x - chip / 2:.1f},{chip_y + k:.1f} h-9" for k in (-10.5, -3.5, 3.5, 10.5)]
-    for k in (-10.5, -3.5):                   # the chip's left-hand pins reach into the organic side
-        stubs += [f"M{chip_x + k:.1f},{chip_y - chip / 2:.1f} v-9", f"M{chip_x + k:.1f},{chip_y + chip / 2:.1f} v9"]
-    out.append(f'<path d="{" ".join(stubs)}" fill="none" stroke="{P.cyan}" stroke-width="1.35" '
-               f'stroke-linecap="round" filter="url(#glow)"/>')
-    # The chip.
-    out.append(f'<circle cx="{chip_x:.1f}" cy="{chip_y:.1f}" r="40" fill="url(#cyanGlow)">'
-               f'<animate attributeName="opacity" values="0.5;1;0.5" dur="2.4s" repeatCount="indefinite"/></circle>'
-               f'<rect x="{chip_x - chip / 2:.1f}" y="{chip_y - chip / 2:.1f}" width="{chip}" height="{chip}" rx="3" '
-               f'fill="{P.node}" stroke="{P.cyan}" stroke-width="1.7"/>'
-               f'<rect x="{chip_x - 8:.1f}" y="{chip_y - 8:.1f}" width="16" height="16" rx="1.5" fill="{P.ink}">'
-               f'<animate attributeName="opacity" values="0.75;1;0.75" dur="2.4s" repeatCount="indefinite"/></rect>')
-
     # Outlines: the organic side bright, the silicon side drawn mostly by its own traces.
     out.append(f'<path d="{left_d}" fill="none" stroke="url(#chromeEdge)" stroke-width="1.7"/>'
                f'<path d="{right_d}" fill="none" stroke="{P.cyan}" stroke-opacity="0.55" stroke-width="1.3" filter="url(#glow)"/>')
+    # The chip's left-hand legs reach into the organic side as short electrodes.
+    stub_d = " ".join(f"M{a[0]:.1f},{a[1]:.1f} L{b[0]:.1f},{b[1]:.1f}" for a, b in stubs)
+    out.append(f'<path d="{stub_d}" fill="none" stroke="{P.cyan}" stroke-width="1.35" '
+               f'stroke-linecap="round" filter="url(#glow)"/>')
+    out += [f'<circle cx="{b[0]:.1f}" cy="{b[1]:.1f}" r="1.9" fill="{P.node}" stroke="{P.cyan}" stroke-width="1.1"/>'
+            for _, b in stubs]
+
+    # The AI chip: a dark die in both themes, so the lettering can glow. A light orbits its edge
+    # and wakes each leg as it passes; the chip fires a ring just before every signal leaves.
+    T = 7.2
+    step = T / len(techs)
+    lit, orbit, cr = "#43dcff", 3.6, 6
+    x0, y0, x1, y1 = chip_x - half, chip_y - half, chip_x + half, chip_y + half
+    edge = (f"M{x0 + cr:.1f},{y0:.1f} H{x1 - cr:.1f} A{cr},{cr} 0 0 1 {x1:.1f},{y0 + cr:.1f} V{y1 - cr:.1f} "
+            f"A{cr},{cr} 0 0 1 {x1 - cr:.1f},{y1:.1f} H{x0 + cr:.1f} A{cr},{cr} 0 0 1 {x0:.1f},{y1 - cr:.1f} "
+            f"V{y0 + cr:.1f} A{cr},{cr} 0 0 1 {x0 + cr:.1f},{y0:.1f} Z")
+    side, corner = chip - 2 * cr, math.pi * cr / 2
+    perim = 4 * (side + corner)
+    legs = []
+    for k in PINS:
+        along = k + half - cr                 # distance along a side's straight run
+        for n, (lx, ly, lw, lh) in enumerate(((chip_x + k - 1.6, y0 - leg, 3.2, leg), (x1, chip_y + k - 1.6, leg, 3.2),
+                                              (chip_x + k - 1.6, y1, 3.2, leg), (x0 - leg, chip_y + k - 1.6, leg, 3.2))):
+            frac = (n * (side + corner) + (along if n < 2 else side - along)) / perim
+            legs.append(f'<rect x="{lx:.1f}" y="{ly:.1f}" width="{lw}" height="{lh}" rx="0.8" fill="{P.cyan}" opacity="0.5">'
+                        f'<animate attributeName="opacity" values="0.5;1;0.5;0.5" keyTimes="0;0.05;0.24;1" dur="{orbit}s" '
+                        f'begin="{((frac - 0.06) % 1) * orbit:.2f}s" repeatCount="indefinite"/></rect>')
+    ai = (f'x="{chip_x + 0.75:.1f}" y="{chip_y + 10.6:.1f}" text-anchor="middle" font-size="30" font-weight="700" '
+          f'letter-spacing="1.5"')
+    out.append(
+        f'<defs><linearGradient id="chipFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#143646"/>'
+        f'<stop offset="0.55" stop-color="#0a1318"/><stop offset="1" stop-color="#050709"/></linearGradient>'
+        f'<clipPath id="chipClip"><path d="{edge}"/></clipPath>'
+        f'<filter id="aiGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>'
+        f'<circle cx="{chip_x:.1f}" cy="{chip_y:.1f}" r="64" fill="url(#cyanGlow)">'
+        f'<animate attributeName="opacity" values="0.45;1;0.45" dur="{2 * step}s" repeatCount="indefinite"/></circle>'
+        f'<g transform="translate({chip_x:.1f},{chip_y:.1f})"><rect x="{-half}" y="{-half}" width="{chip}" height="{chip}" rx="{cr}" '
+        f'fill="none" stroke="{P.cyan}" stroke-width="1.2" opacity="0">'
+        f'<animateTransform attributeName="transform" type="scale" values="1;1.5;1.5" keyTimes="0;0.5;1" dur="{step}s" '
+        f'begin="{step - 0.35:.2f}s" repeatCount="indefinite"/>'
+        f'<animate attributeName="opacity" values="0;0.75;0;0" keyTimes="0;0.06;0.5;1" dur="{step}s" '
+        f'begin="{step - 0.35:.2f}s" repeatCount="indefinite"/></rect></g>'
+        + "".join(legs)
+        + f'<path d="{edge}" fill="url(#chipFill)" stroke="{lit}" stroke-width="1.6"/>'
+        f'<g clip-path="url(#chipClip)"><g><animateTransform attributeName="transform" type="translate" '
+        f'values="{-chip} 0;{chip * 1.6:.0f} 0;{chip * 1.6:.0f} 0" keyTimes="0;0.3;1" dur="{4 * step}s" repeatCount="indefinite"/>'
+        f'<rect x="{x0:.1f}" y="{y0 - 20:.1f}" width="15" height="{chip + 40}" fill="#ffffff" fill-opacity="0.17" '
+        f'transform="skewX(-20)" style="transform-box:fill-box;transform-origin:center"/></g></g>'
+        f'<rect x="{x0 + 4.5:.1f}" y="{y0 + 4.5:.1f}" width="{chip - 9}" height="{chip - 9}" rx="3" fill="none" '
+        f'stroke="{lit}" stroke-opacity="0.3"/>'
+        f'<circle cx="{x0 + 9.5:.1f}" cy="{y0 + 9.5:.1f}" r="1.5" fill="{lit}" fill-opacity="0.8"/>'
+        f'<text {ai} fill="{lit}" filter="url(#aiGlow)">AI'
+        f'<animate attributeName="opacity" values="0.55;1;0.55" dur="{2 * step}s" repeatCount="indefinite"/></text>'
+        f'<text {ai} fill="#ffffff">AI</text>'
+        f'<path d="{edge}" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" pathLength="100" '
+        f'stroke-dasharray="12 88" filter="url(#glow)">'
+        f'<animate attributeName="stroke-dashoffset" values="100;0" dur="{orbit}s" repeatCount="indefinite"/></path>')
 
     def pulse(ref, dur, begin, travel, r=2.4):
         return (f'<g opacity="0"><circle r="{r * 3.4:.1f}" fill="url(#cyanGlow)"/><circle r="{r}" fill="{P.ink}"/>'
@@ -855,8 +904,6 @@ def brain_top(P) -> str:
     for k, d in enumerate(rng.sample(long_ones, min(9, len(long_ones)))):
         out.append(f'<path id="ckt{k}" d="{d}" fill="none"/>' + pulse(f"ckt{k}", rng.uniform(1.6, 3.2), rng.uniform(0, 3), 0.8, 2.0))
     # Traces out to the technologies, one signal at a time.
-    T = 7.2
-    step = T / len(techs)
     kt = lambda t: f"{(t % T) / T:.4f}"  # noqa: E731
     for i, tech in enumerate(techs):
         tx = 1014 + 12 * math.sin(math.pi * (i + 0.5) / len(techs))
@@ -933,7 +980,7 @@ def hero(P, M) -> str:
     return card(P, W, H, body, rx=30, defs=defs, sweep_period=8,
                 title=f"{name} — {CFG['role']} at {CFG['company']}",
                 desc=f"{CFG['city']}. Status: {status}. Top view of a brain, half organic folds and half "
-                     f"circuit board around a chip, connected to the tech I build with: {techs}.")
+                     f"circuit board around a glowing AI chip, connected to the tech I build with: {techs}.")
 
 
 # --------------------------------------------------------------------------

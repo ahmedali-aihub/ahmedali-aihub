@@ -50,15 +50,15 @@ class Palette(dict):
 
 DARK = Palette(
     mode="dark",
-    bg_top="#1d1d20", bg_bot="#0a0a0b",
-    glow="#ffffff", glow_op=0.07,
-    grain_hi="1", grain_op=0.3,
-    edge_a="#9a9aa0", edge_b="#2a2a2d", edge_c="#5a5a5f",
+    bg_top="#1c1c1e", bg_bot="#101011",
+    glow="#ffffff", glow_op=0.035,
+    grain_hi="1", grain_op=0,
+    edge_a="#4a4a4e", edge_b="#262628", edge_c="#38383b",
     ink="#f5f5f7", ink2="#c7c7cc", ink3="#8e8e93", ink4="#636366",
     hair="#2c2c2e", hair2="#3a3a3c", plate="#ffffff", plate_op=0.035,
     chrome=[("0", "#ffffff"), ("0.42", "#e5e5ea"), ("0.5", "#8e8e93"),
             ("0.62", "#c7c7cc"), ("1", "#f5f5f7")],
-    shine="#ffffff", shine_op=0.9, sweep_op=0.07,
+    shine="#ffffff", shine_op=0.9, sweep_op=0.025,
     mark="#d1d1d6", mark2="#636366", surface="#141416",
     heat=["#232326", "#3a3a3c", "#636366", "#a1a1a6", "#f2f2f7"],
     node="#161618",
@@ -388,6 +388,7 @@ def card(P, w: int, h: int, body: str, *, title: str, desc: str, rx: int = 26,
     """A brushed-titanium slab: vertical gradient, horizontal brush grain,
     a soft top-left light, a bevelled edge, and a periodic shine sweep."""
     g = P.grain_hi
+    brush_el = (f'<rect width="{w}" height="{h}" filter="url(#brush)" opacity="{P.grain_op}"/>' if P.grain_op else "")
     band = 240
     sweep_el = (f'<rect class="sweep" x="0" y="{-h}" width="{band}" height="{3 * h}" fill="url(#sweep)"/>'
                 if sweep else "")
@@ -425,7 +426,7 @@ text{{font-family:{SANS};}}
 </style>
 <g clip-path="url(#clip)">
 <rect width="{w}" height="{h}" fill="url(#bg)"/>
-<rect width="{w}" height="{h}" filter="url(#brush)" opacity="{P.grain_op}"/>
+{brush_el}
 <rect width="{w}" height="{h}" fill="url(#glow)"/>
 {body}
 {sweep_el}

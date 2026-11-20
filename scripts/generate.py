@@ -1592,25 +1592,6 @@ def metrics_table_md(M) -> str:
     return "\n".join(out)
 
 
-def theme_switch(current: str) -> str:
-    """A row of links that act as a theme toggle: each opens the README forced to that theme."""
-    def item(mode, label, href):
-        return f"<b>{label}</b>" if mode == current else f'<a href="{href}">{label}</a>'
-    return ('<p align="right">'
-            + item("auto", "&#9680; Auto", "README.md") + " &nbsp;&middot;&nbsp; "
-            + item("dark", "&#9679; Dark", "README-dark.md") + " &nbsp;&middot;&nbsp; "
-            + item("light", "&#9675; Light", "README-light.md") + "</p>")
-
-
-def themed_readme(text: str, mode: str) -> str:
-    """Collapse every <picture> to its <img>, pointed at the -dark / -light asset."""
-    def one(m):
-        img = re.search(r"<img\b[^>]*>", m.group(0), re.S).group(0)
-        return re.sub(r"assets/([\w-]+?)-(?:dark|light)\.svg", rf"assets/\1-{mode}.svg", img)
-    text = re.sub(r"<picture>.*?</picture>", one, text, flags=re.S)
-    return replace_section(text, "theme", theme_switch(mode))
-
-
 def replace_section(text: str, name: str, content: str) -> str:
     pat = re.compile(rf"(<!--START_SECTION:{name}-->)(.*?)(<!--END_SECTION:{name}-->)", re.S)
     if not pat.search(text):
@@ -1659,12 +1640,8 @@ def main() -> None:
 
     if README.exists():
         text = README.read_text(encoding="utf-8")
-        text = replace_section(text, "theme", theme_switch("auto"))
         README.write_text(text, encoding="utf-8", newline="\n")
         print("  updated README activity + metrics table")
-        # Forced-theme copies: the link-based theme switch (GitHub READMEs cannot run JS).
-        for mode in ("dark", "light"):
-            (ROOT / f"README-{mode}.md").write_text(themed_readme(text, mode), encoding="utf-8", newline="\n")
 
     print(f"  total={M['total']} commits={M['commits']} streak={M['streak']} longest={M['longest']} "
           f"repos={M['repos']} live={M['live_demos']} langs={[l['name'] for l in M['languages']]}")

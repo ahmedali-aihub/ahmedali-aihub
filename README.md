@@ -6,6 +6,10 @@
   Anything between START_SECTION / END_SECTION markers is overwritten on each run.
 -->
 
+<!--START_SECTION:theme-->
+<p align="right"><b>&#9680; Auto</b> &nbsp;&middot;&nbsp; <a href="README-dark.md">&#9679; Dark</a> &nbsp;&middot;&nbsp; <a href="README-light.md">&#9675; Light</a></p>
+<!--END_SECTION:theme-->
+
 <a href="https://portfolio-kappa-gold-87laqyj57s.vercel.app">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
